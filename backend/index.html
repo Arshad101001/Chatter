@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Chat APP</title>
+</head>
+
+<body class="dark:bg-gray-700 mb-20">
+
+    <div class="container mx-auto mt-6" id="messages">
+        <input type="text" id="1" aria-label="disabled input"
+            class="mb-6 border border-gray-300 odd:bg-gray-800 even:bg-white text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-text dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400  dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            value="This is a message" disabled>
+    </div>
+
+
+    <div class="container mx-auto bottom-0 fixed left-36">
+
+        <form action="" id="form">
+            <div class="mb-6 flex justify-center gap-4 ">
+                <input type="text" id="message"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-900 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+
+                <button type="submit" id="sendBtn"
+                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Send</button>
+
+                <button type="button" id="connectionBtn"
+                    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Disconnect</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.getElementById('form');
+        const sendBtn = document.getElementById('sendBtn');
+        const messageInput = document.getElementById('message');
+        const allMessages = document.getElementById('messages');
+        const connectionBtn = document.getElementById('connectionBtn');
+
+        form.addEventListener('submit', (e)=> {
+            e.preventDefault();
+        });
+
+        socket.on('client-message', (message) => {
+            // console.log(message);
+            
+            const input = document.createElement('input');
+            input.type = "text";
+            input.className = "mb-6 border border-gray-300 odd:bg-gray-800 even:bg-white text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-text dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400  dark:focus:ring-blue-500 dark:focus:border-blue-500";
+            input.value = message;
+            input.disabled = true;
+
+
+            allMessages.appendChild(input);
+        })
+
+
+        sendBtn.addEventListener('click', (e)=>{
+            console.log("send button trigger");
+
+            const message = messageInput.value;
+            
+            socket.emit('server-message', message);
+        });
+
+        connectionBtn.addEventListener('click', (e)=>{
+            console.log(e.target);
+            
+            console.log("connection button trigger");
+            
+            if (socket.connected) {
+                connectionBtn.innerText = "Connect";
+                socket.disconnect()
+            }
+            else {
+                connectionBtn.innerText = "Disonnect";
+                socket.connect()
+            }
+        });
+
+
+    </script>
+    
+</body>
+</html>
