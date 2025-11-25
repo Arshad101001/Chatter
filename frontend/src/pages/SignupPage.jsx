@@ -29,7 +29,7 @@ function SignupPage() {
                   <h2 className="text-2xl font-bold text-slate-400 mb-2">Create Account</h2>
                   <p className="text-slate-400">Sign up for a new account</p>
                 </div>
-                {/* FROM  */}
+                {/* FORM  */}
                 <form onSubmit={handleSubmit} className='space-y-6'>
                   {/* FULL NAME */}
                   <div>
