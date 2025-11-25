@@ -11,17 +11,17 @@ export const signup = async (req, res) => {
 
     try {
         if (!fullName || !email || !password) {
-            return res.status(400).json({ mesage: "All fields are required" });
+            return res.status(400).json({ message: "All fields are required" });
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ mesage: "Password must be atleast 6 characters" });
+            return res.status(400).json({ message: "Password must be atleast 6 characters" });
         }
 
         // check if email is valid: regex
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return res.status(400).json({ mesage: "Invalid email format" });
+            return res.status(400).json({ message: "Invalid email format" });
         }
 
 
