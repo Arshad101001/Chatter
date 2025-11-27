@@ -14,8 +14,8 @@ const __dirname = path.resolve();
 const PORT = ENV.PORT || 3000;
 
 // req.body middleware
-app.use(express.json({ limit: "10mb" }));  // handling json data && adding limit so our backend can handle large file or request
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // handling form data && adding limit so our backend can handle large file or request
+app.use(express.json({ limit: "15mb" }));  // handling json data && adding limit so our backend can handle large file or request
+app.use(express.urlencoded({ extended: true, limit: "15mb" })); // handling form data && adding limit so our backend can handle large file or request
 app.use(cors({ origin: ENV.CLIENT_URL, methods: "GET, POST, PUT, DELETE", credentials: true }));
 app.use(cookieParser());
 
