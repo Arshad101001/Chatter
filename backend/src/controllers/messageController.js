@@ -1,4 +1,5 @@
 import cloudinary from "../lib/cloudinary.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 import Message from "../models/messageModel.js";
 import User from "../models/userModel.js";
 
@@ -69,7 +70,10 @@ export const sendMessage = async (req, res) => {
 
         await newMessage.save();
 
-        // TODO: sned message in realtime if use ris online - socket.io
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newMessage", newMessage);
+        }
 
 
         res.status(200).json(newMessage);
@@ -106,4 +110,4 @@ export const getChatPartners = async (req, res) => {
         console.log("Error in getChatPartners: ", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
-}
+};
