@@ -13,6 +13,7 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
     isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
+    // count: null,
 
     toggleSound: () => {
         localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
@@ -87,5 +88,72 @@ export const useChatStore = create((set, get) => ({
             set({ messages: messages })
             toast.error(error.response?.data?.message || "Something went wrong");
         }
-    }
+    },
+
+    subscribeToMessages: () => {
+        const { selectedUser, isSoundEnabled } = get();
+        // console.log('subscribe to msg called');
+
+        if (!selectedUser) return;
+
+        const socket = useAuthStore.getState().socket;
+
+        socket.on("newMessage", (newMessage) => {
+
+            const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+            if (!isMessageSentFromSelectedUser) return;
+
+            const currentMessages = get().messages;
+            set({ messages: [...currentMessages, newMessage] });
+
+            if (isSoundEnabled) {
+                const notificationSound = new Audio("/sound/notification.mp3");
+
+                notificationSound.currentTime = 0;      // reset to start
+                notificationSound.play().catch((e) => console.log("Audio play failed: ", e));
+            }
+        })
+
+    },
+
+    unsubscribeFromMessages: () => {
+        const socket = useAuthStore.getState().socket;
+        socket.off("newMessage");
+    },
+
+    updateChatList: (chatPartner, message) => {
+        const chats = get().chats;
+
+        const index = chats.findIndex(c => c._id === chatPartner._id);
+
+        let updatedChats;
+
+        if (index !== -1) {
+            updatedChats = [
+                {
+                    ...chats[index],
+                    lastMessage: message,
+                    updatedAt: message.createdAt,
+                },
+                ...chats.filter((_, i) => i !== index),
+            ];
+        } else {
+            updatedChats = [
+                {
+                    ...chatPartner,
+                    lastMessage: message,
+                    updatedAt: message.createdAt,
+                },
+                ...chats,
+            ];
+        }
+
+        set({ chats: updatedChats });
+    },
+    
+    appendIncomingMessage: (message) => {
+        set(state => ({
+            messages: [...state.messages, message],
+        }));
+    },
 }))
