@@ -81,10 +81,7 @@ export const sendMessage = async (req, res) => {
         }
 
         if (senderSocketId) {
-            io.to(senderSocketId).emit("chatUpdated", {
-                newMessage,
-                chatPartner: receiverUser,
-            });
+            io.to(senderSocketId).emit("chatUpdated", { newMessage, chatPartner: receiverUser, });
         }
 
 
