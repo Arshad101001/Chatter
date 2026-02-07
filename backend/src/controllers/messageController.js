@@ -41,6 +41,7 @@ export const sendMessage = async (req, res) => {
         const { text, image } = req.body;
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
+        const senderUser = req.user;
 
         if (!text && !image) {
             return res.status(400).json({ message: "Text or image is required." });
@@ -49,8 +50,9 @@ export const sendMessage = async (req, res) => {
             return res.status(400).json({ message: "Cannot send message to yourself." });
         }
 
-        const receiverExists = await User.exists({_id: receiverId});
-        if (!receiverExists) {
+        // const receiverExists = await User.exists({ _id: receiverId });
+        const receiverUser = await User.findById(receiverId).select("-password");
+        if (!receiverUser) {
             return res.status(404).json({ message: "Receiver not found." });
         }
 
@@ -71,8 +73,18 @@ export const sendMessage = async (req, res) => {
         await newMessage.save();
 
         const receiverSocketId = getReceiverSocketId(receiverId);
+        const senderSocketId = getReceiverSocketId(senderId);
+
         if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
+            // io.to(receiverSocketId).emit("newMessage", newMessage);
+            io.to(receiverSocketId).emit("chatUpdated", { newMessage, chatPartner: senderUser })
+        }
+
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("chatUpdated", {
+                newMessage,
+                chatPartner: receiverUser,
+            });
         }
 
 
