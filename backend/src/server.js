@@ -7,9 +7,10 @@ import { ENV } from './lib/env.js';
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { app, server } from './lib/socket.js';
+import { fileURLToPath } from "url";
 
-
-const __dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const PORT = ENV.PORT || 3000;
 
@@ -24,13 +25,15 @@ app.use("/api/messages", messageRoutes)
 
 // make ready for deployment
 if (ENV.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "../frontend/dist")));
+    const frontendPath = path.join(__dirname, "../../frontend/dist");
 
-    // app.use("*", (req, res) => {
-    app.get((_, res) => {
-        res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    app.use(express.static(frontendPath));
+
+    app.get(/^\/(?!api).*/, (_, res) => {
+        res.sendFile(path.join(frontendPath, "index.html"));
     });
 }
+
 
 
 server.listen(PORT, () => {
