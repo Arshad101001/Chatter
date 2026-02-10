@@ -67,7 +67,7 @@ function MessageInput() {
           isSoundEnabled && playRandomKeyStrokeSound();
         }}
 
-          className='flex-1 min-w-0 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2 px-3 sm:px-4'
+          className='flex-1 min-w-0 text-white bg-slate-800/50 border  border-slate-700/50 rounded-lg py-2 px-3 sm:px-4'
           placeholder='Type your message...'
         />
 
