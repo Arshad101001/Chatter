@@ -121,7 +121,7 @@ export const useAuthStore = create((set, get) => ({
         // if currently chatting with this user, append message
         const selectedUser = chatStore.selectedUser;
         if (selectedUser?._id === newMessage.senderId) {
-            chatStore.appendIncomingMessage(message);
+            chatStore.appendIncomingMessage(newMessage);
         }
     });
     },
