@@ -16,83 +16,106 @@ function LoginPage() {
 
 
   return (
-    <div className='w-full flex items-center justify-center p-4 bg-slate-900'>
-      <div className='relative w-full max-w-6xl md:h-[800px] h-[650px]'>
-        <BorderAnimatedContainer>
-          <div className='w-full flex flex-col md:flex-row'>
-            {/* FORM COLUMN - LEFT SIDE */}
-            <div className='md:w-1/2 p-8 flex items-center justify-center md:border-r border-slate-600/30'>
-              <div className='w-full max-w-md'>
-                {/* HEADING TEXT */}
-                <div className="text-center mb-8">
-                  <MessageCircleIcon className='w-12 h-12 mx-auto text-slate-400 mb-4' />
-                  <h2 className="text-2xl font-bold text-slate-400 mb-2">Welcome Back</h2>
-                  <p className="text-slate-400">Login to access your account</p>
-                </div>
-                {/* FROM  */}
-                <form onSubmit={handleSubmit} className='space-y-6'>
-                  {/* EMAIL INPUT */}
-                  <div>
-                    <label className='auth-input-label'>Email</label>
-                    <div className="relative">
-                      <MailIcon className='auth-input-icon' />
-                      <input type="email"
-                        className="input"
-                        value={formData.email}
-                        onChange={(e) => setformData({ ...formData, email: e.target.value })}
-                        placeholder='Johndoe@gmail.com'
-                      />
-                    </div>
-                  </div>
+    <div className="min-h-screen flex items-center justify-center px-4 w-full">
+      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#171B24]/90 backdrop-blur-xl p-10 shadow-2xl">
 
-                  {/* PASSWORD INPUT */}
-                  <div>
-                    <label className='auth-input-label'>Password</label>
-                    <div className="relative">
-                      <LockIcon className='auth-input-icon' />
-                      <input type="password"
-                        className="input"
-                        value={formData.password}
-                        onChange={(e) => setformData({ ...formData, password: e.target.value })}
-                        placeholder='Enter your password'
-                      />
-                    </div>
-                  </div>
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg shadow-blue-500/40">
+            <MessageCircleIcon className="h-7 w-7 text-white" />
+          </div>
+        </div>
 
-                  {/* SUBMIT BUTTON */}
-                  <button className='auth-btn' type="submit" disabled={isLoggingIn}>
-                    {
-                      isLoggingIn ? (<LoaderIcon className='w-full h-5 animate-spin text-center' />) : ("Sign In")
-                    }
-                  </button>
-                </form>
+        {/* Heading */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white">
+            Welcome back
+          </h1>
 
-                <div className="mt-6 text-center">
-                  <Link to="/signup" className='auth-link'>
-                    Don't have an account? Sign up
-                  </Link>
-                </div>
-              </div>
-            </div>
+          <p className="mt-3 text-gray-400">
+            Sign in to continue your conversations.
+          </p>
+        </div>
 
-            {/* FORM ILLUSTRATION - RIGHT SIDE */}
-            <div className="hidden md:w-1/2 md:flex items-center justify-center p-6 bg-linear-to-bl from-slate-800/20 to-transparent">
-              <div>
-                <img src="/login.png" alt="People using mobile devices" className='w-full h-auto object-contain' />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-                <div className="mt-6 text-center">
-                  <h3 className="text-xl font-medium text-cyan-400">Connect anytime, anywhere</h3>
+          {/* Email */}
+          <div>
+            <label className="mb-2 block text-sm text-gray-300">
+              Email
+            </label>
 
-                  <div className="mt-4 flex justify-center gap-4">
-                    <span className="auth-badge">Secure</span>
-                    <span className="auth-badge">Fast</span>
-                    <span className="auth-badge">Reliable</span>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center rounded-2xl border border-white/10 bg-[#242B35] px-4 h-14 focus-within:border-blue-500">
+
+              <MailIcon className="h-5 w-5 text-gray-400" />
+
+              <input
+                type="email"
+                placeholder="john@example.com"
+                value={formData.email}
+                onChange={(e) =>
+                  setformData({
+                    ...formData,
+                    email: e.target.value,
+                  })
+                }
+                className="ml-3 w-full bg-transparent text-white outline-none placeholder:text-gray-500"
+              />
             </div>
           </div>
-        </BorderAnimatedContainer>
+
+          {/* Password */}
+          <div>
+            <label className="mb-2 block text-sm text-gray-300">
+              Password
+            </label>
+
+            <div className="flex items-center rounded-2xl border border-white/10 bg-[#242B35] px-4 h-14 focus-within:border-blue-500">
+
+              <LockIcon className="h-5 w-5 text-gray-400" />
+
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={(e) =>
+                  setformData({
+                    ...formData,
+                    password: e.target.value,
+                  })
+                }
+                className="ml-3 w-full bg-transparent text-white outline-none placeholder:text-gray-500"
+              />
+            </div>
+          </div>
+
+          {/* Button */}
+          <button
+            type="submit"
+            disabled={isLoggingIn}
+            className="mt-4 w-full h-14 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition shadow-[0_0_30px_rgba(59,130,246,0.45)] flex items-center justify-center"
+          >
+            {isLoggingIn ? (
+              <LoaderIcon className="h-5 w-5 animate-spin" />
+            ) : (
+              "Sign In"
+            )}
+          </button>
+
+        </form>
+
+        {/* Footer */}
+        <p className="mt-8 text-center text-gray-400">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="font-semibold text-blue-400 hover:text-blue-300"
+          >
+            Sign Up
+          </Link>
+        </p>
+
       </div>
     </div>
   )
