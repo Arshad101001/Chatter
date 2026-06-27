@@ -16,97 +16,133 @@ function SignupPage() {
 
 
   return (
-    <div className='w-full flex items-center justify-center p-4 bg-slate-900'>
-      <div className='relative w-full max-w-6xl md:h-[800px] h-[650px]'>
-        <BorderAnimatedContainer>
-          <div className='w-full flex flex-col md:flex-row'>
-            {/* FORM COLUMN - LEFT SIDE */}
-            <div className='md:w-1/2 p-8 flex items-center justify-center md:border-r border-slate-600/30'>
-              <div className='w-full max-w-md'>
-                {/* HEADING TEXT */}
-                <div className="text-center mb-8">
-                  <MessageCircleIcon className='w-12 h-12 mx-auto text-slate-400 mb-4' />
-                  <h2 className="text-2xl font-bold text-slate-400 mb-2">Create Account</h2>
-                  <p className="text-slate-400">Sign up for a new account</p>
-                </div>
-                {/* FORM  */}
-                <form onSubmit={handleSubmit} className='space-y-6'>
-                  {/* FULL NAME */}
-                  <div>
-                    <label className='auth-input-label'>Full Name</label>
-                    <div className="relative">
-                      <UserIcon className='auth-input-icon' />
-                      <input type="text"
-                        className="input"
-                        value={formData.fullName}
-                        placeholder='John Doe'
-                        onChange={(e) => setformData({ ...formData, fullName: e.target.value })}
-                      />
-                    </div>
-                  </div>
+    <div className="min-h-screen flex items-center justify-center px-4 w-full">
+      <div className="w-full max-w-xl rounded-[28px] border border-slate-700/40 bg-[#161B24] shadow-2xl p-10">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg shadow-blue-500/40">
+            <MessageCircleIcon className="h-7 w-7 text-white" />
+          </div>
+        </div>
 
-                  {/* EMAIL INPUT */}
-                  <div>
-                    <label className='auth-input-label'>Email</label>
-                    <div className="relative">
-                      <MailIcon className='auth-input-icon' />
-                      <input type="email"
-                        className="input"
-                        value={formData.email}
-                        onChange={(e) => setformData({ ...formData, email: e.target.value })}
-                        placeholder='Johndoe@gmail.com'
-                      />
-                    </div>
-                  </div>
+        {/* Heading */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white">
+            Create account
+          </h1>
 
-                  {/* PASSWORD INPUT */}
-                  <div>
-                    <label className='auth-input-label'>Password</label>
-                    <div className="relative">
-                      <LockIcon className='auth-input-icon' />
-                      <input type="password"
-                        className="input"
-                        value={formData.password}
-                        onChange={(e) => setformData({ ...formData, password: e.target.value })}
-                        placeholder='Enter your password'
-                      />
-                    </div>
-                  </div>
+          <p className="text-gray-400 mt-3">
+            Join Chatter and start the conversation.
+          </p>
+        </div>
 
-                  {/* SUBMIT BUTTON */}
-                  <button className='auth-btn' type="submit" disabled={isSigningUp}>
-                    {
-                      isSigningUp ? (<LoaderIcon className='w-full h-5 animate-spin text-center' />) : ("Create Account")
-                    }
-                  </button>
-                </form>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Full Name */}
+          <div>
+            <label className="block text-slate-400 mb-2">
+              Full name
+            </label>
 
-                <div className="mt-6 text-center">
-                  <Link to="/login" className='auth-link'>
-                    Already have an account? Login
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <div className="relative">
+              <UserIcon
+                size={20}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              />
 
-            {/* FORM ILLUSTRATION - RIGHT SIDE */}
-            <div className="hidden md:w-1/2 md:flex items-center justify-center p-6 bg-linear-to-bl from-slate-800/20 to-transparent">
-              <div>
-                <img src="/signup.png" alt="People using mobile devices" className='w-full h-auto object-contain' />
-
-                <div className="mt-6 text-center">
-                  <h3 className="text-xl font-medium text-cyan-400">Start Your Journey Today</h3>
-
-                  <div className="mt-4 flex justify-center gap-4">
-                    <span className="auth-badge">Free</span>
-                    <span className="auth-badge">Easy Setup</span>
-                    <span className="auth-badge">Private</span>
-                  </div>
-                </div>
-              </div>
+              <input
+                type="text"
+                value={formData.fullName}
+                onChange={(e) =>
+                  setformData({
+                    ...formData,
+                    fullName: e.target.value,
+                  })
+                }
+                placeholder="Jane Doe"
+                className="w-full h-14 rounded-xl bg-[#252B35] border border-slate-700 text-white placeholder:text-slate-500 pl-12 pr-4 outline-none focus:border-blue-500 transition"
+              />
             </div>
           </div>
-        </BorderAnimatedContainer>
+
+          {/* Email */}
+          <div>
+            <label className="block text-slate-400 mb-2">
+              Email
+            </label>
+
+            <div className="relative">
+              <MailIcon
+                size={20}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setformData({
+                    ...formData,
+                    email: e.target.value,
+                  })
+                }
+                placeholder="you@example.com"
+                className="w-full h-14 rounded-xl bg-[#252B35] border border-slate-700 text-white placeholder:text-slate-500 pl-12 pr-4 outline-none focus:border-blue-500 transition"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-slate-400 mb-2">
+              Password
+            </label>
+
+            <div className="relative">
+              <LockIcon
+                size={20}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              />
+
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setformData({
+                    ...formData,
+                    password: e.target.value,
+                  })
+                }
+                placeholder="At least 8 characters"
+                className="w-full h-14 rounded-xl bg-[#252B35] border border-slate-700 text-white placeholder:text-slate-500 pl-12 pr-4 outline-none focus:border-blue-500 transition"
+              />
+            </div>
+          </div>
+
+          {/* Button */}
+          <button
+            type="submit"
+            disabled={isSigningUp}
+            className="mt-4 w-full h-14 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition shadow-[0_0_30px_rgba(59,130,246,0.45)] flex items-center justify-center"
+          >
+            {isSigningUp ? (
+              <LoaderIcon className="animate-spin" />
+            ) : (
+              "Create account →"
+            )}
+          </button>
+        </form>
+
+        {/* Login */}
+        <div className="mt-10 text-center text-slate-400">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-blue-500 hover:text-blue-400 font-medium"
+          >
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   )
