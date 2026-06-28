@@ -29,55 +29,79 @@ function ProfileHeader() {
   }
 
   return (
-    <div className='p-6 border-b bg-slate-700/50'>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* AVATAR */}
-          <div className="avatar avatar-online">
-            <button className='size-14 rounded-full overflow-hidden relative group' onClick={() => fileInputRef.current.click()}>
-              <img src={selectedImg || authUser.profilePic || "./avatar.png"} alt="User image" className='size-full object-cover' />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <span className='text-white text-xs'>Change</span>
-              </div>
-            </button>
-            {/* below we have used ref so that we can use above button to trigger this */}
-            <input type="file" accept='image/*' ref={fileInputRef} onChange={handleImageUpload} className='hidden' />
-          </div>
+  <div className="border-b border-white/5 px-4 py-4 bg-[#0F141D]">
 
-          {/* USERNAME & ONLINE TEXT */}
-          <div>
-            <h3 className="text-slate-200 font-medium text-base max-w-[180px] truncate">
-              {authUser.fullName}
-            </h3>
+    {/* Top Row */}
+    <div className="flex items-center justify-between">
 
-            <p className="text-slate-400 text-xs">Online</p>
-          </div>
-        </div>
+      {/* Left */}
+      <div>
+        <p className="text-[10px] tracking-[0.35em] uppercase text-blue-400/70 font-medium">
+          Chatter
+        </p>
 
-        {/* BUTTONS */}
-        <div className="flex gap-4 items-center">
-          {/* LOGOUT BUTTON */}
-          <button className="text-slate-400 hover:text-slate-200 transition-colors" onClick={logout}>
-            <LogOutIcon className='size-5' />
-          </button>
-
-          {/* SOUND TOGGLE BUTTON */}
-          <button className="text-slate-400 hover:text-slate-200 transition-colors"
-            onClick={() => {
-              // play click sound before toggling
-              mouseClickSound.currentTime = 0; // reset to start
-              mouseClickSound.play().catch((error) => console.log("Audio play failed: ", error));
-              toggleSound();
-            }}
-          >
-            {
-              isSoundEnabled ? (<Volume2Icon className='size-5' />) : (<VolumeOffIcon className='size-5' />)
-            }
-          </button>
-        </div>
+        <h1 className="mt-1 text-xl font-bold text-white">
+          Conversations
+        </h1>
       </div>
+
+      {/* Right Buttons */}
+      <div className="flex gap-2">
+
+        {/* Change Profile Picture */}
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className="relative group h-12 w-12 overflow-hidden rounded-full"
+        >
+          <img
+            src={selectedImg || authUser.profilePic || "./avatar.png"}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+
+          <div className="absolute inset-0 bg-black/50 opacity-0 transition group-hover:opacity-100 flex items-center justify-center text-xs text-white">
+            Edit
+          </div>
+        </button>
+
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+
+        {/* Sound */}
+        <button
+          onClick={() => {
+            mouseClickSound.currentTime = 0;
+            mouseClickSound.play().catch(() => {});
+            toggleSound();
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-300 transition hover:bg-blue-500 hover:text-white"
+        >
+          {isSoundEnabled ? (
+            <Volume2Icon size={20} />
+          ) : (
+            <VolumeOffIcon size={20} />
+          )}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={logout}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-300 transition hover:bg-red-500 hover:text-white"
+        >
+          <LogOutIcon size={20} />
+        </button>
+
+      </div>
+
     </div>
-  )
+
+  </div>
+);
 }
 
 export default ProfileHeader

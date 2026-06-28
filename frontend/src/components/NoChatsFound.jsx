@@ -8,8 +8,8 @@ function NoChatsFound() {
 
     return (
         <div className='flex flex-col items-center justify-center py-10 text-center space-y-4'>
-            <div className="w-16 h-16 bg-cyan-500/10 rounded-full flex justify-center items-center">
-                <MessageCircleIcon className='w-8 h-8 bg-cyan-400' />
+            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex justify-center items-center">
+                <MessageCircleIcon className='w-8 h-8 bg-blue-400' />
             </div>
             <div>
                 <h4 className="text-slate-200 font-medium mb-1">No conversations yet</h4>
@@ -18,7 +18,7 @@ function NoChatsFound() {
                 </p>
             </div>
             <button onClick={() => setActiveTab("contacts")}
-                className='px-4 py-2 text-sm text-cyan-400 bg-cyan-500/10 rounded-lg hover:bg-cyan-500/20 transition-colors'
+                className='px-4 py-2 text-sm text-blue-400 bg-blue-500/10 rounded-lg hover:bg-blue-600/20transition-colors'
             >
                 Find contacts
             </button>

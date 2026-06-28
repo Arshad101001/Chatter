@@ -47,77 +47,91 @@ function ChatContainer() {
   };
 
   return (
-    <>
+    
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <ChatHeader />
 
-      <div className="flex-1 w-full overflow-y-auto overflow-x-hidden px-2 sm:px-6 py-4 sm:py-8">
-        {
-          messages.length > 0 && !isMessagesLoading ? (
-            <div className='w-full max-w-3xl mx-auto space-y-4 sm:space-y-6'>
-              {
-                messages.map((msg, index) => {
-                  const msgDate = new Date(msg.createdAt);
-                  const prevMsg = messages[index - 1];
-                  const prevDate = prevMsg ? new Date(prevMsg.createdAt) : null;
+      <div className="relative flex-1 overflow-y-auto overflow-x-hidden px-6 py-6 bg-[#0F1728]">
 
-                  const showDateSeparator = !prevDate || !isSameDay(msgDate, prevDate);
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none bg-[radial-gradient(circle,#ffffff_1px,transparent_1px)] bg-size-[24px_24px]" />
 
-                  return (
-                    <React.Fragment key={msg._id}>
-                      {showDateSeparator && (
-                        <div className="flex justify-center my-4">
-                          <span className="text-xs px-3 py-1 rounded-full bg-slate-700/60 text-slate-200">
-                            {getDateLabel(msgDate)}
-                          </span>
-                        </div>
-                      )}
+        <div className="relative w-full">
+          {
+            messages.length > 0 && !isMessagesLoading ? (
+              <div className='w-full space-y-4 sm:space-y-6'>
+                {
+                  messages.map((msg, index) => {
+                    const msgDate = new Date(msg.createdAt);
+                    const prevMsg = messages[index - 1];
+                    const prevDate = prevMsg ? new Date(prevMsg.createdAt) : null;
 
-                      <div
-                        className={`chat ${msg.senderId === authUser._id ? "chat-end" : "chat-start"
-                          }`}
-                      >
+                    const showDateSeparator = !prevDate || !isSameDay(msgDate, prevDate);
+
+                    return (
+                      <React.Fragment key={msg._id}>
+                        {showDateSeparator && (
+                          <div className="flex justify-center my-4">
+                            <span className="rounded-full border border-white/10 bg-[#141C2E] px-4 py-1 text-xs text-gray-400">
+                              {getDateLabel(msgDate)}
+                            </span>
+                          </div>
+                        )}
+
                         <div
-                          className={`chat-bubble relative max-w-[78%] sm:max-w-[70%] wrap-break-word ${msg.senderId === authUser._id
-                            ? "bg-cyan-600 text-white"
-                            : "bg-slate-800 text-slate-200"
+                          className={`flex ${msg.senderId === authUser._id
+                            ? "justify-end"
+                            : "justify-start"
                             }`}
                         >
-                          {msg.image && (
-                            <img
-                              src={msg.image}
-                              alt="Shared"
-                              className="rounded-lg w-full max-h-60 object-cover"
-                            />
-                          )}
+                          <div
+                            className={`relative max-w-[75%] rounded-[28px] px-6 py-5 shadow-lg 
+                              ${msg.senderId === authUser._id ? "ml-auto bg-blue-600 text-white shadow-lg shadow-blue-600/20 rounded-[20px]"
+                                : "bg-[#141C2E] text-white border border-white/5 rounded-[20px]"
+                              }`}
+                          >
+                            {msg.image && (
+                              <img
+                                src={msg.image}
+                                alt="Shared"
+                                className="rounded-2xl w-full max-h-72 object-cover"
+                              />
+                            )}
 
-                          {msg.text && (
-                            <p className="mt-2 text-sm sm:text-base">{msg.text}</p>
-                          )}
+                            {msg.text && (
+                              <p className="leading-8 text-[16px]">{msg.text}</p>
+                            )}
 
-                          <p className="text-xs mt-1 opacity-75">
-                            {msgDate.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                            <p
+                              className={`mt-3 text-xs ${msg.senderId === authUser._id
+                                ? "text-blue-100"
+                                : "text-gray-400"
+                                }`}
+                            >
+                              {msgDate.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                })
+                      </React.Fragment>
+                    );
+                  })
 
-              }
-              {/* Scroll target */}
-              <div ref={messageEndRef} />
-            </div>
-          ) : isMessagesLoading ? <MessagesLoadingSkeleton /> : (
-            <NoChatHistoryPlaceholder name={selectedUser.fullName} />
-          )
-        }
+                }
+                {/* Scroll target */}
+                <div ref={messageEndRef} />
+              </div>
+            ) : isMessagesLoading ? <MessagesLoadingSkeleton /> : (
+              <NoChatHistoryPlaceholder name={selectedUser.fullName} />
+            )
+          }
+        </div>
       </div>
 
+
       <MessageInput />
-    </>
+      </div>
   )
 }
 

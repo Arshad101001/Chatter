@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useChatStore } from '../store/useChatStore';
-import { XIcon } from 'lucide-react'
+import { XIcon, PhoneIcon, VideoIcon, MoreVerticalIcon } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore';
 
 function ChatHeader() {
@@ -24,24 +24,64 @@ function ChatHeader() {
 
 
     return (
-        <div className='flex justify-between items-center bg-slate-800/50 border-b border-slate-700/50 max-h-[84px] px-6 flex-1'>
-            <div className="flex items-center space-x-3">
-                <div className={`avatar ${isOnline ? "avatar-online" : "avatar-offline"}`}>
-                    <div className='w-12 rounded-full'>
-                        <img src={selectedUser.profilePic || "/avatar.png"} alt={selectedUser.fullName} />
+        <div className="flex items-center justify-between border-b border-white/5 bg-[#0C1120] px-6 py-4">
+
+            {/* Left */}
+            <div className="flex items-center gap-4">
+
+                <div className="relative">
+                    <img
+                        src={selectedUser.profilePic || "/avatar.png"}
+                        alt={selectedUser.fullName}
+                        className="h-12 w-12 rounded-full object-cover"
+                    />
+
+                    {isOnline && (
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0C1120] bg-green-400" />
+                    )}
+                </div>
+
+                <div>
+                    <h2 className="text-base font-semibold text-white">{selectedUser.fullName}</h2>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className={`text-[10px] font-semibold uppercase tracking-widest ${isOnline ? "text-green-400" : "text-gray-500"}`}>
+                            {isOnline ? "Online" : "Offline"}
+                        </span>
                     </div>
                 </div>
-                <div>
-                    <h3 className="text-slate-200 font-medium">{selectedUser.fullName}</h3>
-                    <p className="text-slate-400 text-sm">{isOnline ? "Online" : "Offline"}</p>
-                </div>
+
             </div>
 
-            <button onClick={() => setSelectedUser(null)}>
-                <XIcon className='w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer' />
-            </button>
+            {/* Right */}
+            <div className="flex items-center gap-3">
+
+                {/* Voice */}
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                    <PhoneIcon size={18} />
+                </button>
+
+                {/* Video */}
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                    <VideoIcon size={18} />
+                </button>
+
+                {/* More */}
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                    <MoreVerticalIcon size={18} />
+                </button>
+
+                {/* Close (mobile) */}
+                <button
+                    onClick={() => setSelectedUser(null)}
+                    className="ml-2 rounded-full p-2 text-gray-400 transition hover:bg-[#1B2434] hover:text-white md:hidden"
+                >
+                    <XIcon size={20} />
+                </button>
+
+            </div>
+
         </div>
-    )
+    );
 }
 
 export default ChatHeader

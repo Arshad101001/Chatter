@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react'
 import useKeyboardSound from '../hooks/useKeyboardSound'
 import { useChatStore } from "../store/useChatStore";
 import toast from 'react-hot-toast';
-import { ImageIcon, SendIcon, XIcon } from "lucide-react";
+import { ImageIcon, SendIcon, SmileIcon, XIcon } from "lucide-react";
 
 function MessageInput() {
   const { playRandomKeyStrokeSound } = useKeyboardSound();
@@ -47,48 +47,88 @@ function MessageInput() {
   };
 
   return (
-    <div className='p-2 sm:p-4 border-t border-slate-700/50 overflow-x-hidden'>
-      {
-        imagePreview && (
-          <div className="max-w-3xl mx-auto mb-3 flex items-center px-2 sm:px-0">
-            <div className="relative">
-              <img src={imagePreview} alt="Preview" className='w-20 h-20 object-cover rounded-lg border border-slate-700' />
-              <button onClick={removeImage} className='absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-200 hover:bg-slate-700'>
-                <XIcon className='w-4 h-4' />
-              </button>
-            </div>
+    <div className="border-t border-white/5 bg-[#0C1120] px-6 py-4">
+
+      {/* Image Preview */}
+      {imagePreview && (
+        <div className="max-w-3xl mx-auto mb-4 flex items-center">
+          <div className="relative">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="h-20 w-20 rounded-2xl object-cover border border-white/10"
+            />
+
+            <button
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#1B2434] text-gray-300 hover:bg-red-500 hover:text-white"
+            >
+              <XIcon size={14} />
+            </button>
           </div>
-        )
-      }
+        </div>
+      )}
 
-      <form onSubmit={handleSendMessage} className='max-w-3xl mx-auto flex w-full gap-2 sm:gap-4'>
-        <input type="text" value={text} onChange={(e) => {
-          setText(e.target.value);
-          isSoundEnabled && playRandomKeyStrokeSound();
-        }}
+      {/* Input Bar */}
+      <form
+        onSubmit={handleSendMessage}
+        className="mx-auto flex max-w-3xl items-center gap-3 rounded-full border border-white/8 bg-[#141C2E] px-4 py-2.5 shadow-lg"
+      >
 
-          className='flex-1 min-w-0 text-white bg-slate-800/50 border  border-slate-700/50 rounded-lg py-2 px-3 sm:px-4'
-          placeholder='Type your message...'
-        />
-
-        <input type="file" accept='image/*' ref={fileInputRef} onChange={handleImageChange} className='hidden' />
-
+        {/* Image Button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className={`bg-slate-800/50 text-slate-400 hover:text-slate-200 rounded-lg px-3 sm:px-4 transition-colors ${imagePreview ? "text-cyan-500" : ""}`}
+          className={`flex h-9 w-9 items-center justify-center rounded-full bg-[#1A2440] text-gray-400 hover:bg-blue-600 hover:text-white transition
+          ${imagePreview
+              ? "bg-blue-500 text-white"
+              : "bg-[#1B2434] text-gray-300 hover:bg-blue-500 hover:text-white"
+            }`}
         >
-          <ImageIcon className='w-5 h-5' />
+          <ImageIcon size={18} />
         </button>
 
-        <button type="submit" disabled={!text.trim() && !imagePreview}
-          className='bg-linear-to-r from-cyan-500 to-cyan-400 text-white rounded-lg px-3 sm:px-4 py-2 font-medium transition-all disabled:opacity-50'
+        {/* Input */}
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            isSoundEnabled && playRandomKeyStrokeSound();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              handleSendMessage(e);
+            }
+          }}
+          placeholder="Type your message..."
+          className="flex-1 bg-transparent text-white outline-none placeholder:text-gray-500"
+        />
+
+        {/* Send Button */}
+        <button
+          type="submit"
+          disabled={!text.trim() && !imagePreview}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-40"
         >
-          <SendIcon className='w-5 h-5' />
+          <SendIcon size={18} />
         </button>
+
+        <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:text-white transition">
+          <SmileIcon size={18} />
+        </button>
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleImageChange}
+          className="hidden"
+        />
       </form>
+
     </div>
-  )
+  );
 }
 
 export default MessageInput
