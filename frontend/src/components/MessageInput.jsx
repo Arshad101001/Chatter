@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import useKeyboardSound from '../hooks/useKeyboardSound'
 import { useChatStore } from "../store/useChatStore";
 import toast from 'react-hot-toast';
@@ -11,6 +11,7 @@ function MessageInput() {
   const [imagePreview, setImagePreview] = useState(null);
 
   const fileInputRef = useRef(null);
+  const textInputRef = useRef(null);
 
   const { sendMessage, isSoundEnabled } = useChatStore();
 
@@ -46,6 +47,12 @@ function MessageInput() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  useEffect(() => {
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  }, []);
+
   return (
     <div className="border-t border-white/5 bg-[#0C1120] px-6 py-4">
 
@@ -72,7 +79,7 @@ function MessageInput() {
       {/* Input Bar */}
       <form
         onSubmit={handleSendMessage}
-        className="mx-auto flex max-w-3xl items-center gap-3 rounded-full border border-white/8 bg-[#141C2E] px-4 py-2.5 shadow-lg"
+        className="mx-auto flex max-w-3xl items-center gap-3 rounded-full border border-white/8 bg-[#141C2E] px-4 py-2.5 shadow-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
       >
 
         {/* Image Button */}
@@ -92,6 +99,7 @@ function MessageInput() {
         <input
           type="text"
           value={text}
+          ref={textInputRef}
           onChange={(e) => {
             setText(e.target.value);
             isSoundEnabled && playRandomKeyStrokeSound();
