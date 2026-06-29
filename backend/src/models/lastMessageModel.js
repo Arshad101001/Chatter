@@ -23,15 +23,8 @@ const messageSchema = mongoose.Schema({
         type: String,
     },
 
-    isRead: {
-        type: Boolean,
-        default: false,
-    },
-
 }, { timestamps: true });
 
-const Message = mongoose.model("Message", messageSchema);
+const LastMessage = mongoose.model("LastMessage", messageSchema);
 
-export default Message;
-
-
+export default LastMessage;

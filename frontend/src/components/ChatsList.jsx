@@ -60,15 +60,20 @@ function ChatsList() {
                 </h3>
 
                 <span className="text-[11px] text-gray-500 shrink-0">
-                  {formatTime(lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.updatedAt) }
+                  {formatTime(lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.updatedAt)}
                 </span>
 
-                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">2</span>
+
               </div>
 
-              <p className="mt-0.5 truncate text-xs text-gray-500">
-                {lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.text }
-              </p>
+              <div className="flex items-center justify-between">
+                
+                <p className="mt-0.5 truncate text-xs text-gray-500">
+                  {lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.text}
+                </p>
+
+                <span className={chat.unreadCount > 0 ? "ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white " : "hidden"}>{chat.unreadCount}</span>
+              </div>
 
             </div>
 

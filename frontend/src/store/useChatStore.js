@@ -8,6 +8,7 @@ export const useChatStore = create((set, get) => ({
     allContacts: [],
     chats: [],
     messages: [],
+    lastMessages: [],
     activeTab: "chats",
     selectedUser: null,
     isUsersLoading: false,
@@ -35,6 +36,15 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    getLastMessages: async () => {
+        try {
+            const res = await axiosInstance.get("/messages/last-messages");
+            set({ lastMessages: res.data });
+        } catch (error) {
+            toast.error(error.response.data.message)
+        }
+    },
+
     getMyChatPartners: async () => {
         set({ isUsersLoading: true });
         try {
@@ -48,9 +58,32 @@ export const useChatStore = create((set, get) => ({
     },
 
     getMessagesByUserId: async (userId) => {
+        const chats = get().chats;
+        const selectedUser = get().selectedUser;
         set({ isMessagesLoading: true });
 
         try {
+            // Update unread count based on whether the selected user is the chat partner or not
+            let updatedChats;
+            if (selectedUser && selectedUser._id === userId) {
+                // If the selected user is the chat partner, reset unread count
+                updatedChats = chats.map(chat => {
+                    if (chat._id === userId) {
+                        return { ...chat, unreadCount: 0 };
+                    }
+                    return chat;
+                })
+            } else {
+                // If the selected user is not the chat partner, increment unread count
+                updatedChats = chats.map(chat => {
+                    if (chat._id === userId) {
+                        return { ...chat, unreadCount: (chat.unreadCount || 0) + 1 };
+                    }
+                    return chat;
+                })
+            }
+            set({ chats: updatedChats });
+
             const res = await axiosInstance.get(`/messages/${userId}`);
             set({ messages: res.data });
 
@@ -80,6 +113,27 @@ export const useChatStore = create((set, get) => ({
 
         // immediatly update the ui by adding the message
         set({ messages: [...messages, optimisticMessage] })
+
+        // update lastMessages state
+        set((state) => {
+            const exist = state.lastMessages.some((msg) => (msg.senderId === authUser._id && msg.receiverId === selectedUser._id) || (msg.senderId === selectedUser._id && msg.receiverId === authUser._id));
+
+            if (exist) {
+                return {
+                    lastMessages: state.lastMessages.map((msg) => {
+                        if ((msg.senderId === authUser._id && msg.receiverId === selectedUser._id) || (msg.senderId === selectedUser._id && msg.receiverId === authUser._id)) {
+                            return { ...msg, ...optimisticMessage, updatedAt: new Date().toISOString() };
+                        }
+                        return msg;
+                    })
+                };
+            } else {
+                return {
+                    lastMessages: [...state.lastMessages, optimisticMessage]
+                };
+            }
+        });
+
         try {
             const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
             set({ messages: messages.concat(res.data) });
@@ -123,6 +177,7 @@ export const useChatStore = create((set, get) => ({
 
     updateChatList: (chatPartner, message) => {
         const chats = get().chats;
+        const selectedUser = get().selectedUser;
 
         const index = chats.findIndex(c => c._id === chatPartner._id);
 
@@ -148,12 +203,75 @@ export const useChatStore = create((set, get) => ({
             ];
         }
 
+        // Update unread count based on whether the selected user is the chat partner or not
+        if (selectedUser && selectedUser._id === chatPartner._id) {
+            // If the selected user is the chat partner, reset unread count
+            updatedChats = updatedChats.map(chat => {
+                if (chat._id === chatPartner._id) {
+                    return { ...chat, unreadCount: 0 };
+                }
+                return chat;
+            })
+        } else {
+            // If the selected user is not the chat partner, increment unread count
+            updatedChats = updatedChats.map(chat => {
+                if (chat._id === chatPartner._id) {
+                    return { ...chat, unreadCount: (chat.unreadCount || 0) + 1 };
+                }
+                return chat;
+            })
+        }
+
         set({ chats: updatedChats });
+
+        // Update lastMessages state
+        set((state) => {
+            const exist = state.lastMessages.some((msg) => (msg.senderId === message.senderId && msg.receiverId === message.receiverId) || (msg.senderId === message.receiverId && msg.receiverId === message.senderId));
+
+            if (exist) {
+                return {
+                    lastMessages: state.lastMessages.map((msg) => {
+                        if ((msg.senderId === message.senderId && msg.receiverId === message.receiverId) || (msg.senderId === message.receiverId && msg.receiverId === message.senderId)) {
+                            return { ...msg, ...message, updatedAt: new Date().toISOString() };
+                        }
+                        return msg;
+                    })
+                };
+            } else {
+                return {
+                    lastMessages: [...state.lastMessages, message]
+                };
+            }
+        });
+
     },
-    
-    appendIncomingMessage: (message) => {
+
+    appendIncomingMessage: async (message) => {
         set(state => ({
             messages: [...state.messages, message],
         }));
+
+        await axiosInstance.put(`/messages/read/${message.senderId}`);  // Mark messages as read
+
+        // Update lastMessages state
+        set((state) => {
+            const exist = state.lastMessages.some((msg) => (msg.senderId === message.senderId && msg.receiverId === message.receiverId) || (msg.senderId === message.receiverId && msg.receiverId === message.senderId));
+
+            if (exist) {
+                return {
+                    lastMessages: state.lastMessages.map((msg) => {
+                        if ((msg.senderId === message.senderId && msg.receiverId === message.receiverId) || (msg.senderId === message.receiverId && msg.receiverId === message.senderId)) {
+                            return { ...msg, ...message, updatedAt: new Date().toISOString() };
+                        }
+                        return msg;
+                    })
+                };
+            } else {
+                return {
+                    lastMessages: [...state.lastMessages, message]
+                };
+            }
+        });
+
     },
 }))
