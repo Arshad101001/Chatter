@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useEffect } from 'react'
 import BorderAnimatedContainer from '../components/BorderAnimatedContainer'
 import { useChatStore } from '../store/useChatStore';
 import ProfileHeader from '../components/ProfileHeader';
@@ -8,9 +8,38 @@ import ChatsList from '../components/ChatsList';
 import NoConversationPlaceholder from '../components/NoConversationPlaceholder';
 import ChatContainer from '../components/ChatContainer';
 import { MessageCircleIcon, MessagesSquareIcon, UsersIcon, BellIcon, SettingsIcon, SearchIcon } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 function ChatPage() {
   const { activeTab, selectedUser } = useChatStore();
+  const socket = useAuthStore.getState().socket;
+
+  const handleReceiveSenderSocketId = useCallback(({ senderSocketId }) => {
+    console.log("Received sender socket ID: ", senderSocketId);
+    socket.emit("sendSocketId", { senderSocketId: senderSocketId });
+    useChatStore.getState().setRemoteSocketId(senderSocketId);
+  }, [socket]);
+
+  const handleReceiveReceiverSocketId = useCallback(({ receiverSocketId }) => {
+    console.log("Received receiver socket ID: ", receiverSocketId);
+    useChatStore.getState().setRemoteSocketId(receiverSocketId);
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit("joinRoom", { roomId: useAuthStore.getState().authUser._id });
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("receiveSenderSocketId", handleReceiveSenderSocketId);
+    socket.on("receiveReceiverSocketId", handleReceiveReceiverSocketId);
+    return () => {
+      socket.off("receiveSenderSocketId");
+      socket.off("receiveReceiverSocketId");
+    }
+  }, [socket]);
   return (
     <div className="h-full w-full bg-[#080D15] flex">
       <div className="pointer-events-none fixed top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-blue-500/5 blur-[120px]" />

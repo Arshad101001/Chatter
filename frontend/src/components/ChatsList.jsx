@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 function ChatsList() {
   const { getMyChatPartners, chats, isUsersLoading, setSelectedUser, selectedUser, getLastMessages, lastMessages } = useChatStore();
+  const socket = useAuthStore.getState().socket;
   const { onlineUsers } = useAuthStore();
 
   const formatTime = (isoString) => {
@@ -23,6 +24,11 @@ function ChatsList() {
     getLastMessages();
   }, [getMyChatPartners, getLastMessages]);
 
+  const handleChatSelect = (chat) => {
+    setSelectedUser(chat);
+    socket.emit("sendSocketId", { receiverRoomId: chat._id });
+  };
+
   if (isUsersLoading) return <UsersLoadingSkeleton />;
   if (chats.length === 0) return <NoChatsFound />;
   return (
@@ -30,7 +36,7 @@ function ChatsList() {
       {chats.map((chat) => (
         <button
           key={chat._id}
-          onClick={() => setSelectedUser(chat)}
+          onClick={() => handleChatSelect(chat)}
           className={`w-full px-3 py-3 rounded-xl transition-all duration-200 
               ${selectedUser?._id === chat._id ? "bg-[#1A2845] border border-blue-500/30"
               : "hover:bg-[#141C2E]"}`}
@@ -67,7 +73,7 @@ function ChatsList() {
               </div>
 
               <div className="flex items-center justify-between">
-                
+
                 <p className="mt-0.5 truncate text-xs text-gray-500">
                   {lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.text}
                 </p>
