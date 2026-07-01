@@ -9,21 +9,32 @@ import NoConversationPlaceholder from '../components/NoConversationPlaceholder';
 import ChatContainer from '../components/ChatContainer';
 import { MessageCircleIcon, MessagesSquareIcon, UsersIcon, BellIcon, SettingsIcon, SearchIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import IncomingCallScreen from '../components/IncomingCallScreen';
+import { Link } from 'react-router';
 
 function ChatPage() {
-  const { activeTab, selectedUser } = useChatStore();
+  const { activeTab, selectedUser, isCalling, incomingCall, setIncomingCall } = useChatStore();
   const socket = useAuthStore.getState().socket;
 
-  const handleReceiveSenderSocketId = useCallback(({ senderSocketId }) => {
-    console.log("Received sender socket ID: ", senderSocketId);
-    socket.emit("sendSocketId", { senderSocketId: senderSocketId });
-    useChatStore.getState().setRemoteSocketId(senderSocketId);
-  }, [socket]);
 
-  const handleReceiveReceiverSocketId = useCallback(({ receiverSocketId }) => {
-    console.log("Received receiver socket ID: ", receiverSocketId);
-    useChatStore.getState().setRemoteSocketId(receiverSocketId);
-  }, [socket]);
+  const handleIncomingCall = useCallback(async ({ from, fromUserId, callType, callerName, callerPic, offer }) => {
+    const { isCalling, incomingCall } = useChatStore.getState();
+
+    if (isCalling == true || incomingCall != null) {
+      socket.emit("call:busy", { msg: "Busy on other call...", to: fromUserId });
+    } else {
+
+      setIncomingCall({
+        socketId: from,
+        userId: fromUserId,
+        callType,
+        fullName: callerName,
+        profilePic: callerPic,
+        offer,
+      });
+    }
+  }, []);
+
 
   useEffect(() => {
     if (!socket) return;
@@ -31,43 +42,50 @@ function ChatPage() {
   }, [socket]);
 
   useEffect(() => {
-    if (!socket) return;
+    socket.on("incoming:call", handleIncomingCall)
 
-    socket.on("receiveSenderSocketId", handleReceiveSenderSocketId);
-    socket.on("receiveReceiverSocketId", handleReceiveReceiverSocketId);
     return () => {
-      socket.off("receiveSenderSocketId");
-      socket.off("receiveReceiverSocketId");
+      socket.off("incoming:call", handleIncomingCall)
     }
-  }, [socket]);
+  }, [handleIncomingCall, socket]);
+
   return (
     <div className="h-full w-full bg-[#080D15] flex">
       <div className="pointer-events-none fixed top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-blue-500/5 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-blue-600/5 blur-[100px]" />
       {/* Icon Rail - far left narrow strip */}
       <div className="w-16 bg-[#080D15] border-r border-white/5 flex flex-col items-center py-5 gap-5 shrink-0">
+        
         {/* Brand Icon */}
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600">
-          <MessageCircleIcon className="h-5 w-5 text-white" />
-        </div>
+        <Link to="/">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600">
+            <MessageCircleIcon className="h-5 w-5 text-white" />
+          </div>
+        </Link>
+
         {/* Chat icon (active) */}
         <button className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1A2440] text-blue-400">
           <MessagesSquareIcon className="h-5 w-5" />  {/* use MessagesSquareIcon from lucide */}
         </button>
+
         {/* Contacts icon */}
         <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
           <UsersIcon className="h-5 w-5" />
         </button>
+
         {/* Bell icon */}
         <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
           <BellIcon className="h-5 w-5" />
         </button>
+
         {/* Settings at bottom */}
         <div className="mt-auto">
           <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
             <SettingsIcon className="h-5 w-5" />
           </button>
         </div>
+
+        
       </div>
 
       {/* Sidebar */}
@@ -90,9 +108,17 @@ function ChatPage() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
-        {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
-      </div>
+      <>
+        {
+          incomingCall != null ? (
+            <IncomingCallScreen />
+          ) : (
+            <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
+              {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
+            </div>
+          )
+        }
+      </>
     </div>
   );
 }

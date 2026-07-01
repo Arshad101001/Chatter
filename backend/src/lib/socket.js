@@ -35,20 +35,63 @@ io.on("connection", (socket) => {
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     // listen for joinRoom event from clients
-    socket.on("joinRoom", ({ roomId}) =>{
+    socket.on("joinRoom", ({ roomId }) => {
         socket.join(roomId);
         console.log(`${socket.user.fullName} joined room ${roomId}`);
     });
 
-    socket.on("sendSocketId", ({ receiverRoomId }) => {
-        io.to(receiverRoomId).emit("receiveSenderSocketId", { senderSocketId: socket.id});
+
+    socket.on("user:call", ({ to, callType, callerName, callerPic, offer }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (!receiverSocketId) {
+            socket.emit("call:busy", { msg: "User is offline" });
+            return;
+        }
+        io.to(receiverSocketId).emit("incoming:call", {
+            from: socket.id,
+            fromUserId: userId,
+            callType,
+            callerName,
+            callerPic,
+            offer,
+        });
     });
 
-    socket.on("sendSocketId", ({ senderSocketId }) => {
-        io.to(senderSocketId).emit("receiveReceiverSocketId", { receiverSocketId: socket.id});
+    socket.on("ice:candidate", ({ to, candidate }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("ice:candidate", { candidate });
+        }
     });
 
+    socket.on("call:busy", ({ msg, to }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("call:busy", { msg });
+        }
+    });
 
+    socket.on("call:rejected", ({ to }) => {
+        const receiverSocketId = userSocketMap[to];
+
+        socket.to(receiverSocketId).emit("call:rejected");
+    });
+
+    socket.on("call:accepted", ({ to, ans }) => {
+        const receiverSocketId = userSocketMap[to];
+
+        socket.to(receiverSocketId).emit("call:accepted", {
+            from: socket.id,
+            ans,
+        });
+    });
+
+    socket.on("call:ended", ({ to }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("call:ended");
+        }
+    });
 
 
     // with socket.on we listen for events from clients
@@ -60,5 +103,5 @@ io.on("connection", (socket) => {
 })
 
 
-export {io, server, app};
+export { io, server, app };
 

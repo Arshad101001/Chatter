@@ -12,7 +12,8 @@ function formatDuration(seconds) {
 
 function IncomingCallScreen() {
 
-  const { incomingCall, setIncomingCall, setIsCalling } = useChatStore();
+  const { incomingCall, setIncomingCall } = useChatStore();
+  const { authUser } = useAuthStore();
   const socket = useAuthStore.getState().socket;
 
   const [status, setStatus] = useState("ringing");
@@ -24,7 +25,6 @@ function IncomingCallScreen() {
 
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
-  // -----------------------------------
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -42,16 +42,14 @@ function IncomingCallScreen() {
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(() => { });
     }
-  }, [remoteStream]);
+  }, [remoteStream, status]);
 
   const handleAcceptCall = useCallback(async () => {
-    // console.log("incomingCall object:", incomingCall);
-    // console.log("offer from incomingCall:", incomingCall.offer);
-    // console.log("peer signaling state before getAnswer:", peer.peer.signalingState);
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: true,
+      video: incomingCall.callType === "video",
     });
 
     for (const track of stream.getTracks()) {
@@ -59,7 +57,6 @@ function IncomingCallScreen() {
     }
 
     setLocalStream(stream);
-    // localVideoRef.current.srcObject = stream;
     setStatus("connected");
 
     const ans = await peer.getAnswer(incomingCall.offer);
@@ -69,7 +66,6 @@ function IncomingCallScreen() {
       ans,
     });
 
-    // setIncomingCall(null);
   }, [incomingCall, socket]);
 
 
@@ -86,7 +82,6 @@ function IncomingCallScreen() {
 
     // Stop all tracks
     if (localStream) localStream.getTracks().forEach(t => t.stop());
-
     peer.reset();
     setIncomingCall(null);
   }, [incomingCall, localStream, socket]);
@@ -95,14 +90,22 @@ function IncomingCallScreen() {
     await peer.addIceCandidate(candidate);
   }, []);
 
-  // Add to useEffect:
+  const handleCallEnded = useCallback(async () => {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    peer.reset();
+    setIncomingCall(null);
+  }, [localStream]);
+
   useEffect(() => {
     socket.on("ice:candidate", handleIceCandidate);
+    socket.on("call:ended", handleCallEnded);
 
     return () => {
       socket.off("ice:candidate", handleIceCandidate);
+      socket.off("call:ended", handleCallEnded);
+
     };
-  }, [handleIceCandidate, socket]);
+  }, [handleIceCandidate, handleCallEnded, socket]);
 
   useEffect(() => {
     peer.initListeners(socket, incomingCall.userId, (remoteStream) => {
@@ -118,18 +121,30 @@ function IncomingCallScreen() {
     return () => clearInterval(interval);
   }, [status]);
 
+  const toggleMic = () => {
+    if (!localStream) return;
+    localStream.getAudioTracks().forEach(track => track.enabled = !isMicOn);
+    setIsMicOn(!isMicOn);
+  }
+
+  const toggleCam = () => {
+    if (!localStream) return;
+    localStream.getVideoTracks().forEach(track => track.enabled = !isCamOn);
+    setIsCamOn(!isCamOn);
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[radial-gradient(circle,#ffffff_1px,transparent_1px)] bg-size-[28px_28px]" />
 
       {/* Main viewport */}
       <div className="relative flex-1 flex items-center justify-center overflow-hidden">
-        {callType === "video" && status === "connected" && (
+        {status === "connected" && (
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="h-full w-full object-cover"
+            className={`h-full w-full object-cover ${callType === "audio" ? "hidden" : "block"}`}
           />
         )}
 
@@ -161,7 +176,7 @@ function IncomingCallScreen() {
           </div>
         )}
 
-        {callType === "video" && status === "connected" && (
+        {status === "connected" && (
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-5 bg-linear-to-b from-black/60 to-transparent">
             <div>
               <p className="text-white font-semibold text-base">{caller.fullName}</p>
@@ -177,23 +192,24 @@ function IncomingCallScreen() {
 
         {callType === "video" && status === "connected" && (
           <div className="absolute bottom-6 right-6 w-32 h-44 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-[#141C2E]">
-            {isCamOn ? (
+            <>
               <video
                 ref={localVideoRef}
                 autoPlay
                 playsInline
                 muted
-                className="h-full w-full object-cover"
+                className={`h-full w-full object-cover ${isCamOn ? "block" : "hidden"}`}
               />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center">
-                <img
-                  src="/avatar.png"
-                  alt="You"
-                  className="h-14 w-14 rounded-full object-cover opacity-70"
-                />
-              </div>
-            )}
+              {!isCamOn && (
+                <div className="h-full w-full flex items-center justify-center">
+                  <img
+                    src={authUser.profilePic || "/avatar.png"}
+                    alt="You"
+                    className="h-14 w-14 rounded-full object-cover opacity-70"
+                  />
+                </div>
+              )}
+            </>
           </div>
         )}
       </div>
@@ -201,6 +217,7 @@ function IncomingCallScreen() {
       {/* Bottom controls — different layout depending on status */}
       {status === "ringing" ? (
         <div className="relative px-6 py-7 flex items-center justify-center gap-10 bg-[#0C1120] border-t border-white/5">
+
           {/* Decline */}
           <div className="flex flex-col items-center gap-2">
             <button
@@ -226,7 +243,7 @@ function IncomingCallScreen() {
       ) : (
         <div className="relative px-6 py-7 flex items-center justify-center gap-5 bg-[#0C1120] border-t border-white/5">
           <button
-            onClick={() => setIsMicOn(!isMicOn)}
+            onClick={toggleMic}
             className={`flex h-14 w-14 items-center justify-center rounded-full transition ${isMicOn
               ? "bg-[#1A2440] text-white hover:bg-[#243055]"
               : "bg-white text-[#0C1120] hover:bg-gray-200"
@@ -244,7 +261,7 @@ function IncomingCallScreen() {
 
           {callType === "video" && (
             <button
-              onClick={() => setIsCamOn(!isCamOn)}
+              onClick={toggleCam}
               className={`flex h-14 w-14 items-center justify-center rounded-full transition ${isCamOn
                 ? "bg-[#1A2440] text-white hover:bg-[#243055]"
                 : "bg-white text-[#0C1120] hover:bg-gray-200"

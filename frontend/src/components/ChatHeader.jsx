@@ -1,10 +1,14 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { useChatStore } from '../store/useChatStore';
 import { XIcon, PhoneIcon, VideoIcon, MoreVerticalIcon } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore';
+import OutgoingCallScreen from './OutgoingCallScreen';
+import peer from '../services/peer';
 
 function ChatHeader() {
-    const { selectedUser, setSelectedUser } = useChatStore();
+    const { selectedUser, setSelectedUser, setIsCalling, setCallType, remoteSocketId, setLocalStream } = useChatStore();
+
+    const socket = useAuthStore.getState().socket;
     const { onlineUsers } = useAuthStore();
     const isOnline = onlineUsers.includes(selectedUser._id);
 
@@ -14,13 +18,39 @@ function ChatHeader() {
             if (event.key === "Escape") setSelectedUser(null)
         }
 
-
         window.addEventListener("keydown", handleEscKey)
 
-        // cleanup function
         return () => window.removeEventListener("keydown", handleEscKey);
 
     }, [setSelectedUser]);
+
+    const handleCallUser = useCallback(async (type) => {
+        setIsCalling(true);
+        setCallType(type);
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: type === "video",
+        });
+
+        setLocalStream(stream);
+
+        for (const track of stream.getTracks()) {
+            peer.peer.addTrack(track, stream);
+        }
+
+        const offer = await peer.getOffer();
+
+        const { authUser } = useAuthStore.getState();
+        socket.emit("user:call", {
+            to: selectedUser._id,
+            callType: type,
+            callerName: authUser.fullName,
+            callerPic: authUser.profilePic,
+            offer,
+        });
+
+    }, [selectedUser, socket]);
 
 
     return (
@@ -56,12 +86,12 @@ function ChatHeader() {
             <div className="flex items-center gap-3">
 
                 {/* Voice */}
-                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600" onClick={() => { handleCallUser("audio") }}>
                     <PhoneIcon size={18} />
                 </button>
 
                 {/* Video */}
-                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600">
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-400 transition hover:bg-blue-600 hover:text-white hover:border-blue-600" onClick={() => { handleCallUser("video") }}>
                     <VideoIcon size={18} />
                 </button>
 

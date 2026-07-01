@@ -14,23 +14,12 @@ function formatDuration(seconds) {
 function OutgoingCallScreen() {
 
     const { callType, setIsCalling, selectedUser, localStream, } = useChatStore();
+    const { authUser } = useAuthStore();
     const socket = useAuthStore.getState().socket;
 
     const [callee, setCallee] = useState(selectedUser);
-
-    // ---- Dummy / replaceable data ----
-    // status: "calling" (ringing, no remote stream yet) | "connected" (remote stream arrived)
     const [status, setStatus] = useState("calling");
-    const otherUser = {
-        fullName: "Ankit Gupta",
-        profilePic: "/avatar.png",
-    };
-
-    // These would come from your WebRTC/simple-peer logic:
-    // localStream  -> from navigator.mediaDevices.getUserMedia()
-    // remoteStream -> from peer.on("stream", (stream) => setRemoteStream(stream))
     const [remoteStream, setRemoteStream] = useState(null);
-    // -----------------------------------
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
@@ -42,20 +31,15 @@ function OutgoingCallScreen() {
 
     const [statusMsg, setStatusMsg] = useState(null);
 
-    useEffect(() => {
-        if (localVideoRef.current && localStream) {
-            localVideoRef.current.srcObject = localStream;
-        }
-    }, [localStream]);
-
     const handleBusyCall = useCallback(async ({ msg }) => {
         setStatusMsg(msg);
     }, [socket])
 
     const handleCallRejected = useCallback(() => {
-        alert("Call Rejected by user");
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        peer.reset();
         setIsCalling(false);
-    }, []);
+    }, [localStream]);
 
     const handleCallAccepted = useCallback(async ({ from, ans }) => {
         await peer.setRemoteDescription(ans);
@@ -85,25 +69,16 @@ function OutgoingCallScreen() {
             socket.off("call:accepted", handleCallAccepted)
             socket.off("ice:candidate", handleIceCandidate);
             socket.off("call:ended", handleCallEnded);
-
         }
 
     }, [handleBusyCall, handleCallRejected, handleCallAccepted, handleIceCandidate, handleCallEnded, socket]);
 
     useEffect(() => {
         peer.initListeners(socket, selectedUser._id, (remoteStream) => {
-            console.log("remote stream received on caller side:", remoteStream);
             setRemoteStream(remoteStream);
             setStatus("connected");
         });
     }, []);
-
-    const handleEndCall = useCallback(() => {
-        socket.emit("call:ended", { to: selectedUser._id });
-        if (localStream) localStream.getTracks().forEach(t => t.stop());
-        peer.reset();
-        setIsCalling(false);
-    }, [selectedUser, localStream, socket]);
 
     // Attach local stream to local <video> whenever it changes
     useEffect(() => {
@@ -114,9 +89,9 @@ function OutgoingCallScreen() {
 
     // Attach remote stream to remote <video> whenever it changes
     useEffect(() => {
-        console.log("remoteStream state changed:", remoteStream);
         if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
+            remoteVideoRef.current.play().catch(() => { });
         }
     }, [remoteStream, status]);
 
@@ -125,7 +100,7 @@ function OutgoingCallScreen() {
         if (remoteStream) setStatus("connected");
     }, [remoteStream]);
 
-    
+
     // Animated "Calling." dots while ringing
     useEffect(() => {
         if (status !== "calling") return;
@@ -145,6 +120,25 @@ function OutgoingCallScreen() {
             ? formatDuration(duration)
             : `${callType === "video" ? "Video calling" : "Calling"}${".".repeat(dots)}`;
 
+    const toggleMic = () => {
+        if (!localStream) return;
+        localStream.getAudioTracks().forEach(track => track.enabled = !isMicOn);
+        setIsMicOn(!isMicOn);
+    }
+
+    const handleEndCall = useCallback(() => {
+        socket.emit("call:ended", { to: callee._id });
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        peer.reset();
+        setIsCalling(false);
+    }, [callee, localStream, socket]);
+
+    const toggleCam = () => {
+        if (!localStream) return;
+        localStream.getVideoTracks().forEach(track => track.enabled = !isCamOn);
+        setIsCamOn(!isCamOn);
+    }
+
     return (
         <div className="flex flex-col h-full min-h-0 overflow-hidden">
             <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[radial-gradient(circle,#ffffff_1px,transparent_1px)] bg-size-[28px_28px]" />
@@ -152,12 +146,12 @@ function OutgoingCallScreen() {
             {/* Main viewport */}
             <div className="relative flex-1 flex items-center justify-center overflow-hidden">
                 {/* Remote video fills the screen once connected (video calls only) */}
-                {callType === "video" && status === "connected" && (
+                {status === "connected" && (
                     <video
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className="h-full w-full object-cover"
+                        className={`h-full w-full object-cover ${callType === "audio" ? "hidden" : "block"}`}
                     />
                 )}
 
@@ -187,7 +181,7 @@ function OutgoingCallScreen() {
                 )}
 
                 {/* Top info bar — only over a connected video call */}
-                {callType === "video" && status === "connected" && (
+                {status === "connected" && (
                     <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-5 bg-linear-to-b from-black/60 to-transparent">
                         <div>
                             <p className="text-white font-semibold text-base">{callee.fullName}</p>
@@ -205,23 +199,24 @@ function OutgoingCallScreen() {
                         className={`absolute right-6 w-28 h-40 sm:w-32 sm:h-44 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-[#141C2E] transition-all ${status === "connected" ? "bottom-6 sm:w-36 sm:h-48" : "bottom-28"
                             }`}
                     >
-                        {isCamOn ? (
+                        <>
                             <video
                                 ref={localVideoRef}
                                 autoPlay
                                 playsInline
                                 muted
-                                className="h-full w-full object-cover"
+                                className={`h-full w-full object-cover ${isCamOn ? "block" : "hidden"}`}
                             />
-                        ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                                <img
-                                    src="/avatar.png"
-                                    alt="You"
-                                    className="h-12 w-12 rounded-full object-cover opacity-70"
-                                />
-                            </div>
-                        )}
+                            {!isCamOn && (
+                                <div className="h-full w-full flex items-center justify-center">
+                                    <img
+                                        src={authUser.profilePic || "/avatar.png"}
+                                        alt="You"
+                                        className="h-12 w-12 rounded-full object-cover opacity-70"
+                                    />
+                                </div>
+                            )}
+                        </>
                     </div>
                 )}
             </div>
@@ -229,7 +224,7 @@ function OutgoingCallScreen() {
             {/* Controls bar */}
             <div className="relative px-6 py-7 flex items-center justify-center gap-5 bg-[#0C1120] border-t border-white/5">
                 <button
-                    onClick={() => setIsMicOn(!isMicOn)}
+                    onClick={toggleMic}
                     className={`flex h-14 w-14 items-center justify-center rounded-full transition ${isMicOn
                         ? "bg-[#1A2440] text-white hover:bg-[#243055]"
                         : "bg-white text-[#0C1120] hover:bg-gray-200"
@@ -239,7 +234,7 @@ function OutgoingCallScreen() {
                 </button>
 
                 <button
-                    onClick={ handleEndCall }
+                    onClick={handleEndCall}
                     className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition shadow-lg shadow-red-500/30"
                 >
                     <PhoneOffIcon size={24} />
@@ -247,7 +242,7 @@ function OutgoingCallScreen() {
 
                 {callType === "video" && (
                     <button
-                        onClick={() => setIsCamOn(!isCamOn)}
+                        onClick={toggleCam}
                         className={`flex h-14 w-14 items-center justify-center rounded-full transition ${isCamOn
                             ? "bg-[#1A2440] text-white hover:bg-[#243055]"
                             : "bg-white text-[#0C1120] hover:bg-gray-200"

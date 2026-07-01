@@ -12,10 +12,13 @@ export const useChatStore = create((set, get) => ({
     activeTab: "chats",
     selectedUser: null,
     remoteSocketId: null,
+    isCalling: false,
+    callType: null,
+    incomingCall: null,
+    localStream: null,
     isUsersLoading: false,
     isMessagesLoading: false,
     isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
-    // count: null,
 
     toggleSound: () => {
         localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
@@ -25,6 +28,10 @@ export const useChatStore = create((set, get) => ({
     setActiveTab: (tab) => set({ activeTab: tab }),
     setSelectedUser: (selectedUser) => set({ selectedUser }),
     setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId}),
+    setIsCalling: (isCalling) => set({ isCalling }),
+    setCallType: (callType) => set({ callType }),
+    setIncomingCall: (incomingCall) => set({ incomingCall }),
+    setLocalStream: (stream) => set({ localStream: stream }),
 
     getAllContacts: async () => {
         set({ isUsersLoading: true });
@@ -148,7 +155,6 @@ export const useChatStore = create((set, get) => ({
 
     subscribeToMessages: () => {
         const { selectedUser, isSoundEnabled } = get();
-        // console.log('subscribe to msg called');
 
         if (!selectedUser) return;
 
@@ -169,7 +175,6 @@ export const useChatStore = create((set, get) => ({
                 notificationSound.play().catch((e) => console.log("Audio play failed: ", e));
             }
         })
-
     },
 
     unsubscribeFromMessages: () => {
@@ -245,7 +250,6 @@ export const useChatStore = create((set, get) => ({
                 };
             }
         });
-
     },
 
     appendIncomingMessage: async (message) => {
@@ -274,6 +278,5 @@ export const useChatStore = create((set, get) => ({
                 };
             }
         });
-
     },
 }))
