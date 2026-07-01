@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import BorderAnimatedContainer from '../components/BorderAnimatedContainer'
 import { useChatStore } from '../store/useChatStore';
 import ProfileHeader from '../components/ProfileHeader';
@@ -7,15 +7,35 @@ import ContactList from '../components/ContactList';
 import ChatsList from '../components/ChatsList';
 import NoConversationPlaceholder from '../components/NoConversationPlaceholder';
 import ChatContainer from '../components/ChatContainer';
-import { MessageCircleIcon, MessagesSquareIcon, UsersIcon, BellIcon, SettingsIcon, SearchIcon } from 'lucide-react';
+import { MessageCircleIcon, MessagesSquareIcon, UsersIcon, BellIcon, SettingsIcon, SearchIcon, LogOutIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import IncomingCallScreen from '../components/IncomingCallScreen';
 import { Link } from 'react-router';
 
 function ChatPage() {
   const { activeTab, selectedUser, isCalling, incomingCall, setIncomingCall } = useChatStore();
+  const { logout, authUser, updateProfile } = useAuthStore();
+
   const socket = useAuthStore.getState().socket;
 
+  const [selectedImg, setSelectedImg] = useState(null);
+
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      setSelectedImg(base64Image);
+
+      await updateProfile({ profilePic: base64Image });
+    }
+  }
 
   const handleIncomingCall = useCallback(async ({ from, fromUserId, callType, callerName, callerPic, offer }) => {
     const { isCalling, incomingCall } = useChatStore.getState();
@@ -55,7 +75,7 @@ function ChatPage() {
       <div className="pointer-events-none fixed bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-blue-600/5 blur-[100px]" />
       {/* Icon Rail - far left narrow strip */}
       <div className="w-16 bg-[#080D15] border-r border-white/5 flex flex-col items-center py-5 gap-5 shrink-0">
-        
+
         {/* Brand Icon */}
         <Link to="/">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600">
@@ -78,14 +98,49 @@ function ChatPage() {
           <BellIcon className="h-5 w-5" />
         </button>
 
-        {/* Settings at bottom */}
-        <div className="mt-auto">
-          <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
-            <SettingsIcon className="h-5 w-5" />
-          </button>
-        </div>
 
-        
+
+        <div className="mt-auto gap-3 flex flex-col items-center">
+
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-300 transition hover:bg-red-500 hover:text-white"
+          >
+            <LogOutIcon className="h-5 w-5" />
+          </button>
+
+          {/* Settings at bottom */}
+          <button className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
+            <SettingsIcon className="h-6 w-6" />
+          </button>
+
+          {/* Change Profile Picture */}
+          <div className='rounded-full h-12 w-12 flex items-center justify-center'>
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="relative group h-10 w-10 overflow-hidden rounded-full"
+            >
+              <img
+                src={selectedImg || authUser.profilePic || "./avatar.png"}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+
+              <div className="absolute inset-0 bg-black/50 opacity-0 transition group-hover:opacity-100 flex items-center justify-center text-xs text-white">
+                Edit
+              </div>
+            </button>
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Sidebar */}
