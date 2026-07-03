@@ -3,6 +3,7 @@ import useKeyboardSound from '../hooks/useKeyboardSound'
 import { useChatStore } from "../store/useChatStore";
 import toast from 'react-hot-toast';
 import { ImageIcon, SendIcon, SmileIcon, XIcon } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 function MessageInput() {
   const { playRandomKeyStrokeSound } = useKeyboardSound();
@@ -12,6 +13,9 @@ function MessageInput() {
 
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null);
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
 
   const { sendMessage, isSoundEnabled } = useChatStore();
 
@@ -51,6 +55,16 @@ function MessageInput() {
     if (textInputRef.current) {
       textInputRef.current.focus();
     }
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -122,9 +136,32 @@ function MessageInput() {
           <SendIcon size={18} />
         </button>
 
-        <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:text-white transition">
-          <SmileIcon size={18} />
-        </button>
+        <div className="relative" ref={emojiPickerRef}>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:text-white transition"
+          >
+            <SmileIcon size={18} />
+          </button>
+
+          {showEmojiPicker && (
+            <div className="absolute bottom-16 right-0 z-50">
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  setText((prev) => prev + emojiData.emoji); // swap setText for whatever your message state setter is called
+                }}
+                theme="dark"
+                skinTonesDisabled
+                searchDisabled={false}
+                width={320}
+                height={400}
+                previewConfig={{ showPreview: false }}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Hidden File Input */}
         <input
           type="file"
