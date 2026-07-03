@@ -89,6 +89,11 @@ export const useAuthStore = create((set, get) => ({
             const res = await axiosInstance.put("/auth/update-profile", data);
             set({ authUser: res.data });
 
+            const socket = useAuthStore.getState().socket;
+            if (socket) {
+                socket.emit("profile:updated", { updatedUser: res.data });
+            }
+            
             toast.success("Profile updated successfully");
         } catch (error) {
             console.log("Error in update profile: ", error);
@@ -113,17 +118,17 @@ export const useAuthStore = create((set, get) => ({
 
         // updates the chatpartner
         socket.on("chatUpdated", ({ newMessage, chatPartner }) => {
-        const chatStore = useChatStore.getState();
+            const chatStore = useChatStore.getState();
 
-        // update chat list
-        chatStore.updateChatList(chatPartner, newMessage);
+            // update chat list
+            chatStore.updateChatList(chatPartner, newMessage);
 
-        // if currently chatting with this user, append message
-        const selectedUser = chatStore.selectedUser;
-        if (selectedUser?._id === newMessage.senderId) {
-            chatStore.appendIncomingMessage(newMessage);
-        }
-    });
+            // if currently chatting with this user, append message
+            const selectedUser = chatStore.selectedUser;
+            if (selectedUser?._id === newMessage.senderId) {
+                chatStore.appendIncomingMessage(newMessage);
+            }
+        });
     },
 
     disconnectSocket: () => {

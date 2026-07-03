@@ -55,6 +55,14 @@ function ChatPage() {
     }
   }, []);
 
+  const handleProfileUpdated = useCallback(async ({ updatedUser }) => {
+    useChatStore.getState().updateUserInList(updatedUser);
+
+    const { selectedUser } = useChatStore.getState();
+    if (selectedUser?._id === updatedUser._id) {
+      useChatStore.getState().setSelectedUser(updatedUser);
+    }
+  }, [])
 
   useEffect(() => {
     if (!socket) return;
@@ -63,11 +71,13 @@ function ChatPage() {
 
   useEffect(() => {
     socket.on("incoming:call", handleIncomingCall)
+    socket.on("profile:updated", handleProfileUpdated)
 
     return () => {
       socket.off("incoming:call", handleIncomingCall)
+      socket.off("profile:updated", handleProfileUpdated)
     }
-  }, [handleIncomingCall, socket]);
+  }, [handleIncomingCall, handleProfileUpdated, socket]);
 
   return (
     <div className="h-full w-full bg-[#080D15] flex">

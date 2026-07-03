@@ -93,8 +93,10 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on("profile:updated", ({ updatedUser }) => {
+        socket.broadcast.emit("profile:updated", { updatedUser });
+    });
 
-    // with socket.on we listen for events from clients
     socket.on("disconnect", () => {
         console.log("A user disconnected", socket.user.fullName);
         delete userSocketMap[userId];

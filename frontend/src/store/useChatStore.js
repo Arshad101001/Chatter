@@ -21,11 +21,21 @@ export const useChatStore = create((set, get) => ({
 
     setActiveTab: (tab) => set({ activeTab: tab }),
     setSelectedUser: (selectedUser) => set({ selectedUser }),
-    setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId}),
+    setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId }),
     setIsCalling: (isCalling) => set({ isCalling }),
     setCallType: (callType) => set({ callType }),
     setIncomingCall: (incomingCall) => set({ incomingCall }),
     setLocalStream: (stream) => set({ localStream: stream }),
+
+    updateUserInList: (updatedUser) => set((state) => ({
+        allContacts: state.allContacts.map((u) =>
+            u._id === updatedUser._id ? { ...u, ...updatedUser } : u
+        ),
+
+        chats: state.chats?.map((c) =>
+            c._id === updatedUser._id ? { ...c, ...updatedUser } : c
+        ),
+    })),
 
     getAllContacts: async () => {
         set({ isUsersLoading: true });
