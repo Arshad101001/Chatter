@@ -9,13 +9,29 @@ function ChatsList() {
   const socket = useAuthStore.getState().socket;
   const { onlineUsers } = useAuthStore();
 
-  const formatTime = (isoString) => {
-    if (!isoString) return "";
+  const isSameDay = (d1, d2) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
 
-    return new Date(isoString).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true // Set to false if you want 24-hour time (e.g., 14:30)
+  const getDateLabel = (date) => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (isSameDay(date, today)) {
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+    if (isSameDay(date, yesterday)) return "Yesterday";
+
+    return date.toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
@@ -66,7 +82,7 @@ function ChatsList() {
                 </h3>
 
                 <span className="text-[11px] text-gray-500 shrink-0">
-                  {formatTime(lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.updatedAt)}
+                  {getDateLabel(new Date(lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.updatedAt))}
                 </span>
 
 
