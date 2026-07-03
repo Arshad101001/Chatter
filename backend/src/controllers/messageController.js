@@ -46,6 +46,27 @@ export const getMessagesByUserId = async (req, res) => {
     }
 };
 
+export const getUserByEmail = async (req, res) => {
+    try {
+        const { email } = req.params;
+        // console.log(email);
+        
+        if (!email) return res.status(400).json({ message: "Email is required" });
+
+        const user = await User.findOne({ email }).select("-password");
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Check id the user searching themselves
+        if (user._id.toString() === req.user._id.toString()) {
+            return res.status(404).json({ message: "Cannot search yourself" });
+        }
+
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 export const getLastMessages = async (req, res) => {
     try {
         const myId = req.user._id;

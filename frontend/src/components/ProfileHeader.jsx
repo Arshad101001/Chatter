@@ -2,11 +2,13 @@ import React, { useRef, useState } from 'react'
 import { LogOutIcon, VolumeOffIcon, Volume2Icon, Plus } from "lucide-react";
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
+import NewChatPopup from './Newchatpopup';
 
 const mouseClickSound = new Audio("/sound/mouse-click.mp3");
 
 function ProfileHeader() {
   const { logout, authUser, updateProfile } = useAuthStore();
+  const [showNewChat, setShowNewChat] = useState(false);
 
   return (
     <div className="border-b border-white/5 px-4 py-4 bg-[#0F141D]">
@@ -27,9 +29,14 @@ function ProfileHeader() {
 
         {/* Right Buttons */}
         <div className="flex gap-2">
-          <button className='flex items-center justify-center rounded-full bg-blue-600'>
+          <button
+            onClick={() => setShowNewChat(true)}
+            className='flex items-center justify-center rounded-full bg-blue-600'
+          >
             <Plus size={45} strokeWidth={1.5} />
           </button>
+
+          {showNewChat && <NewChatPopup onClose={() => setShowNewChat(false)} />}
         </div>
 
       </div>
