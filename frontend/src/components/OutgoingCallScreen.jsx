@@ -146,14 +146,15 @@ function OutgoingCallScreen() {
             {/* Main viewport */}
             <div className="relative flex-1 flex items-center justify-center overflow-hidden">
                 {/* Remote video fills the screen once connected (video calls only) */}
-                {status === "connected" && (
-                    <video
-                        ref={remoteVideoRef}
-                        autoPlay
-                        playsInline
-                        className={`h-full w-full object-cover ${callType === "audio" ? "hidden" : "block"}`}
-                    />
-                )}
+
+                <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    playsInline
+                    className={`h-full w-full object-cover ${status === "connected" && callType === "video" ? "block" : "hidden"
+                        }`}
+                />
+
 
                 {/* Avatar + name shown while ringing, or for audio calls always */}
                 {(status === "calling" || callType === "audio") && (
