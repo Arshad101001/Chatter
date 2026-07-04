@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import BorderAnimatedContainer from '../components/BorderAnimatedContainer'
 import { useChatStore } from '../store/useChatStore';
 import ProfileHeader from '../components/ProfileHeader';
-import ActiveTabSwitch from '../components/ActiveTabSwitch';
-import ContactList from '../components/ContactList';
 import ChatsList from '../components/ChatsList';
 import NoConversationPlaceholder from '../components/NoConversationPlaceholder';
 import ChatContainer from '../components/ChatContainer';
@@ -19,6 +17,7 @@ function ChatPage() {
   const socket = useAuthStore.getState().socket;
 
   const [selectedImg, setSelectedImg] = useState(null);
+  const [activeIcon, setActiveIcon] = useState("chats");
 
   const fileInputRef = useRef(null);
 
@@ -84,7 +83,7 @@ function ChatPage() {
       <div className="pointer-events-none fixed top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-blue-500/5 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-blue-600/5 blur-[100px]" />
       {/* Icon Rail - far left narrow strip */}
-      <div className="w-16 bg-[#080D15] border-r border-white/5 flex flex-col items-center py-5 gap-5 shrink-0">
+      <div className="hidden md:flex w-16 bg-[#080D15] border-r border-white/5 flex-col items-center py-5 gap-5 shrink-0">
 
         {/* Brand Icon */}
         <Link to="/">
@@ -93,26 +92,40 @@ function ChatPage() {
           </div>
         </Link>
 
-        {/* Chat icon (active) */}
-        <button className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1A2440] text-blue-400">
-          <MessagesSquareIcon className="h-5 w-5" />  {/* use MessagesSquareIcon from lucide */}
+        {/* Chat icon */}
+        <button
+          onClick={() => setActiveIcon("chats")}
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl transition ${activeIcon === "chats"
+            ? "bg-[#1A2440] text-blue-400"
+            : "text-gray-500 hover:bg-[#1A2440] hover:text-gray-300"
+            }`}
+        >
+          <MessagesSquareIcon className="h-5 w-5" />
         </button>
 
         {/* Contacts icon */}
-        <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
+        <button
+          onClick={() => setActiveIcon("contacts")}
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl transition ${activeIcon === "contacts"
+            ? "bg-[#1A2440] text-blue-400"
+            : "text-gray-500 hover:bg-[#1A2440] hover:text-gray-300"
+            }`}
+        >
           <UsersIcon className="h-5 w-5" />
         </button>
 
         {/* Bell icon */}
-        <button className="flex h-10 w-10 items-center justify-center rounded-2xl text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
+        <button
+          onClick={() => setActiveIcon("notifications")}
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl transition ${activeIcon === "notifications"
+            ? "bg-[#1A2440] text-blue-400"
+            : "text-gray-500 hover:bg-[#1A2440] hover:text-gray-300"
+            }`}
+        >
           <BellIcon className="h-5 w-5" />
         </button>
 
-
-
         <div className="mt-auto gap-3 flex flex-col items-center">
-
-          {/* Logout */}
           <button
             onClick={logout}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#141C2E] border border-white/5 text-gray-300 transition hover:bg-red-500 hover:text-white"
@@ -120,36 +133,37 @@ function ChatPage() {
             <LogOutIcon className="h-5 w-5" />
           </button>
 
-          {/* Settings at bottom */}
-          <button className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 hover:bg-[#1A2440] hover:text-gray-300 transition">
+          <button
+            onClick={() => setActiveIcon("settings")}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition ${activeIcon === "settings"
+              ? "bg-[#1A2440] text-blue-400"
+              : "text-gray-500 hover:bg-[#1A2440] hover:text-gray-300"
+              }`}
+          >
             <SettingsIcon className="h-6 w-6" />
           </button>
 
-          {/* Change Profile Picture */}
-          <div className='rounded-full h-12 w-12 flex items-center justify-center'>
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className="relative group h-10 w-10 overflow-hidden rounded-full"
-            >
-              <img
-                src={selectedImg || authUser.profilePic || "./avatar.png"}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-black/50 opacity-0 transition group-hover:opacity-100 flex items-center justify-center text-xs text-white">
-                Edit
-              </div>
-            </button>
-
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              className="hidden"
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="relative group h-10 w-10 overflow-hidden rounded-full"
+          >
+            <img
+              src={selectedImg || authUser.profilePic || "./avatar.png"}
+              alt=""
+              className="h-full w-full object-cover"
             />
-          </div>
+            <div className="absolute inset-0 bg-black/50 opacity-0 transition group-hover:opacity-100 flex items-center justify-center text-xs text-white">
+              Edit
+            </div>
+          </button>
+
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            className="hidden"
+          />
         </div>
       </div>
 
@@ -166,23 +180,37 @@ function ChatPage() {
             />
           </div>
         </div>
-        <ActiveTabSwitch />
-        <div className="flex-1 overflow-y-auto px-2">
-          {activeTab === "chats" ? <ChatsList /> : <ContactList />}
-        </div>
+        <ChatsList />
       </div>
 
       {/* Main area */}
       <>
-        {
-          incomingCall != null ? (
-            <IncomingCallScreen />
-          ) : (
-            <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
-              {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
+        {incomingCall != null ? (
+          <IncomingCallScreen />
+        ) : activeIcon === "chats" ? (
+          <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
+            {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center bg-[#0F1728] min-w-0 min-h-0 overflow-hidden gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#141C2E] border border-white/5">
+              {activeIcon === "contacts" && <UsersIcon className="h-7 w-7 text-blue-400" />}
+              {activeIcon === "notifications" && <BellIcon className="h-7 w-7 text-blue-400" />}
+              {activeIcon === "settings" && <SettingsIcon className="h-7 w-7 text-blue-400" />}
             </div>
-          )
-        }
+            <div className="text-center">
+              <p className="text-white font-semibold text-lg capitalize">
+                {activeIcon === "contacts" && "Contacts"}
+                {activeIcon === "notifications" && "Notifications"}
+                {activeIcon === "settings" && "Settings"}
+              </p>
+              <p className="text-gray-500 text-sm mt-1">Coming in a future update</p>
+            </div>
+            <div className="mt-2 px-4 py-2 rounded-full bg-blue-600/10 border border-blue-500/20">
+              <p className="text-blue-400 text-xs font-medium">🚧 Under Construction</p>
+            </div>
+          </div>
+        )}
       </>
     </div>
   );
