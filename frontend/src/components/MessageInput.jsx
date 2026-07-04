@@ -1,13 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import useKeyboardSound from '../hooks/useKeyboardSound'
 import { useChatStore } from "../store/useChatStore";
 import toast from 'react-hot-toast';
 import { ImageIcon, SendIcon, SmileIcon, XIcon } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 
 function MessageInput() {
-  const { playRandomKeyStrokeSound } = useKeyboardSound();
-
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -17,12 +14,11 @@ function MessageInput() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage, isSoundEnabled } = useChatStore();
+  const { sendMessage } = useChatStore();
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
-    if (isSoundEnabled) playRandomKeyStrokeSound();
 
     sendMessage({
       text: text.trim(),
@@ -116,7 +112,6 @@ function MessageInput() {
           ref={textInputRef}
           onChange={(e) => {
             setText(e.target.value);
-            isSoundEnabled && playRandomKeyStrokeSound();
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {

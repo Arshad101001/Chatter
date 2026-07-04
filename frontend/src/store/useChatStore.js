@@ -5,7 +5,6 @@ import { useAuthStore } from "../store/useAuthStore";
 
 
 export const useChatStore = create((set, get) => ({
-    allContacts: [],
     chats: [],
     messages: [],
     lastMessages: [],
@@ -28,26 +27,10 @@ export const useChatStore = create((set, get) => ({
     setLocalStream: (stream) => set({ localStream: stream }),
 
     updateUserInList: (updatedUser) => set((state) => ({
-        allContacts: state.allContacts.map((u) =>
-            u._id === updatedUser._id ? { ...u, ...updatedUser } : u
-        ),
-
         chats: state.chats?.map((c) =>
             c._id === updatedUser._id ? { ...c, ...updatedUser } : c
         ),
     })),
-
-    getAllContacts: async () => {
-        set({ isUsersLoading: true });
-        try {
-            const res = await axiosInstance.get("/messages/contacts");
-            set({ allContacts: res.data });
-        } catch (error) {
-            toast.error(error.response.data.message)
-        } finally {
-            set({ isUsersLoading: false });
-        }
-    },
 
     getLastMessages: async () => {
         try {
@@ -158,7 +141,7 @@ export const useChatStore = create((set, get) => ({
     },
 
     subscribeToMessages: () => {
-        const { selectedUser, isSoundEnabled } = get();
+        const { selectedUser } = get();
 
         if (!selectedUser) return;
 
@@ -171,13 +154,6 @@ export const useChatStore = create((set, get) => ({
 
             const currentMessages = get().messages;
             set({ messages: [...currentMessages, newMessage] });
-
-            if (isSoundEnabled) {
-                const notificationSound = new Audio("/sound/notification.mp3");
-
-                notificationSound.currentTime = 0;      // reset to start
-                notificationSound.play().catch((e) => console.log("Audio play failed: ", e));
-            }
         })
     },
 

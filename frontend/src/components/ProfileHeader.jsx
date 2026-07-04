@@ -4,8 +4,6 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import NewChatPopup from './Newchatpopup';
 
-const mouseClickSound = new Audio("/sound/mouse-click.mp3");
-
 function ProfileHeader() {
   const { logout, authUser, updateProfile } = useAuthStore();
   const [showNewChat, setShowNewChat] = useState(false);
