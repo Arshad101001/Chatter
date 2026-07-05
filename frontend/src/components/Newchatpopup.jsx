@@ -34,6 +34,11 @@ function NewChatPopup({ onClose }) {
         setFoundUser(null);
 
         try {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                setError("Invalid Email format");
+                return;
+            }
             const res = await axiosInstance.get(`/messages/find-by-email/${email.trim()}`);
             setFoundUser(res.data);
         } catch (err) {
