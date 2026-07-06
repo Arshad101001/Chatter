@@ -9,6 +9,7 @@ import { MessageCircleIcon, MessagesSquareIcon, UsersIcon, BellIcon, SettingsIco
 import { useAuthStore } from '../store/useAuthStore';
 import IncomingCallScreen from '../components/IncomingCallScreen';
 import { Link } from 'react-router';
+import SearchChatPartner from '../components/SearchChatPartner';
 
 function ChatPage() {
   const { activeTab, selectedUser, isCalling, incomingCall, setIncomingCall } = useChatStore();
@@ -172,13 +173,7 @@ function ChatPage() {
         <ProfileHeader />
         {/* Search bar */}
         <div className="px-4 pb-3 mt-5">
-          <div className="flex items-center gap-2 rounded-xl bg-[#141C2E] border border-white/5 px-4 py-2.5">
-            <SearchIcon className="h-4 w-4 text-gray-500 shrink-0" />
-            <input
-              placeholder="Search conversations..."
-              className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
-            />
-          </div>
+          <SearchChatPartner />
         </div>
         <ChatsList />
       </div>
