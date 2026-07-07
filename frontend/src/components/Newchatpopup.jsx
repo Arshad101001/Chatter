@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { XIcon, SearchIcon, LoaderIcon, UserIcon } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
-import { axiosInstance } from "../lib/axios"; // adjust path if different
+import { axiosInstance } from "../lib/axios";
 
 function NewChatPopup({ onClose }) {
     const [email, setEmail] = useState("");
