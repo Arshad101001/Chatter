@@ -97,6 +97,11 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("profile:updated", { updatedUser });
     });
 
+    socket.on("read-message", ({ to, messagePartnerId }) => {
+        const receiverSocketId = userSocketMap[to];
+        socket.to(receiverSocketId).emit("read-message", { messagePartnerId });
+    });
+
     socket.on("disconnect", () => {
         console.log("A user disconnected", socket.user.fullName);
         delete userSocketMap[userId];

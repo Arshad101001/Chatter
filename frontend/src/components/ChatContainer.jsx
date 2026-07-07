@@ -7,10 +7,11 @@ import MessageInput from './MessageInput';
 import MessagesLoadingSkeleton from './MessagesLoadingSkeleton';
 import OutgoingCallScreen from './OutgoingCallScreen';
 import IncomingCallScreen from './IncomingCallScreen';
+import { Check, CheckCheck } from 'lucide-react';
 
 function ChatContainer() {
   const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall } = useChatStore();
-  // const socket = useAuthStore.getState().socket;
+  const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
   const messageEndRef = useRef(null);
@@ -28,6 +29,25 @@ function ChatContainer() {
       messageEndRef.current.scrollIntoView({ behavior: "auto" });
     }
   }, [messages, isCalling]);
+
+  const handleReadMessage = useCallback((messagePartnerId) => {
+    if (selectedUser._id === messagePartnerId.messagePartnerId) {
+      const updatedMessage = messages.map((msg) => {
+        if (msg.senderId === authUser._id) return { ...msg, isRead: true }
+        return msg;
+      })
+
+      useChatStore.setState({ messages: updatedMessage });
+    }
+  }, [messages])
+
+  useEffect(() => {
+    socket.on("read-message", handleReadMessage);
+
+    return () => {
+      socket.off("read-message", handleReadMessage);
+    }
+  }, [handleReadMessage, socket])
 
   const isSameDay = (d1, d2) =>
     d1.getFullYear() === d2.getFullYear() &&
@@ -79,7 +99,7 @@ function ChatContainer() {
                           return (
                             <React.Fragment key={msg._id}>
                               {showDateSeparator && (
-                                <div className="flex justify-center my-4">
+                                <div className="flex justify-center my-2">
                                   <span className="rounded-full border border-white/10 bg-[#141C2E] px-4 py-1 text-xs text-gray-400">
                                     {getDateLabel(msgDate)}
                                   </span>
@@ -87,7 +107,7 @@ function ChatContainer() {
                               )}
 
                               <div
-                                className={`flex ${msg.senderId === authUser._id
+                                className={`flex my-2 ${msg.senderId === authUser._id
                                   ? "justify-end"
                                   : "justify-start"
                                   }`}
@@ -107,19 +127,24 @@ function ChatContainer() {
                                   )}
 
                                   {msg.text && (
-                                    <p className="leading-8 text-[16px]">{msg.text}</p>
+                                    <p className="leading-5 text-[16px]">{msg.text}</p>
                                   )}
 
                                   <p
-                                    className={`mt-3 text-xs ${msg.senderId === authUser._id
-                                      ? "text-blue-100"
-                                      : "text-gray-400"
+                                    className={`flex gap-2 mt-1 text-xs ${msg.senderId === authUser._id
+                                      ? "text-blue-100 justify-end"
+                                      : "text-gray-400 justify-start"
                                       }`}
                                   >
                                     {msgDate.toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
                                     })}
+                                    {
+                                      msg.senderId === authUser._id && (
+                                        msg.isRead ? <CheckCheck className='h-4 w-4' /> : <Check className='h-4 w-4' />
+                                      )
+                                    }
                                   </p>
                                 </div>
                               </div>

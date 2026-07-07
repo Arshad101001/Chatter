@@ -65,19 +65,17 @@ export const useChatStore = create((set, get) => ({
                 // If the selected user is the chat partner, reset unread count
                 updatedChats = chats.map(chat => {
                     if (chat._id === userId) {
+                        // emit user that message is readed
+                        const socket = useAuthStore.getState().socket;
+                        const { authUser } = useAuthStore.getState()
+                        socket.emit("read-message", { to: userId, messagePartnerId: authUser._id });
+
                         return { ...chat, unreadCount: 0 };
                     }
                     return chat;
                 })
-            } else {
-                // If the selected user is not the chat partner, increment unread count
-                updatedChats = chats.map(chat => {
-                    if (chat._id === userId) {
-                        return { ...chat, unreadCount: (chat.unreadCount || 0) + 1 };
-                    }
-                    return chat;
-                })
             }
+
             set({ chats: updatedChats });
 
             const res = await axiosInstance.get(`/messages/${userId}`);
@@ -238,6 +236,11 @@ export const useChatStore = create((set, get) => ({
         }));
 
         await axiosInstance.put(`/messages/read/${message.senderId}`);  // Mark messages as read
+
+        // emit user that message is readed
+        const socket = useAuthStore.getState().socket;
+        const { authUser } = useAuthStore.getState();
+        socket.emit("read-message", { to: message.senderId, messagePartnerId: authUser._id });
 
         // Update lastMessages state
         set((state) => {
