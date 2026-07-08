@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { useChatStore } from '../store/useChatStore'
 import UsersLoadingSkeleton from '../components/UsersLoadingSkeleton'
 import NoChatsFound from './NoChatsFound';
@@ -42,7 +42,6 @@ function ChatsList() {
 
   const handleChatSelect = (chat) => {
     setSelectedUser(chat);
-    socket.emit("sendSocketId", { receiverRoomId: chat._id });
   };
 
   if (isUsersLoading) return <UsersLoadingSkeleton />;
@@ -91,7 +90,12 @@ function ChatsList() {
               <div className="flex items-center justify-between">
 
                 <p className="mt-0.5 truncate text-xs text-gray-500">
-                  {lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id))?.text}
+                  {(() => {
+                    const msg = lastMessages.find((msg) => (msg.senderId === chat._id || msg.receiverId === chat._id));
+                    if(!msg) return "Start Chating...";
+                    const isMe = msg.senderId !== chat._id;
+                    return isMe ? `you: ${msg.text}` :  msg.text;
+                  })()}
                 </p>
 
                 <span className={chat.unreadCount > 0 ? "ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white " : "hidden"}>{chat.unreadCount}</span>
