@@ -37,7 +37,7 @@ export const getUserByEmail = async (req, res) => {
     try {
         const { email } = req.params;
         // console.log(email);
-        
+
         if (!email) return res.status(400).json({ message: "Email is required" });
 
         const user = await User.findOne({ email }).select("-password");
@@ -220,3 +220,81 @@ export const updateReadStatus = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const deleteMessageByMessageId = async (req, res) => {
+    try {
+        const messageId = req.params.messageId;
+        const message = await Message.findById(messageId);
+        if (!message) return res.status(404).json({ message: "Message not found" });
+
+        if (message.senderId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        await Message.findByIdAndDelete(messageId);
+
+        // Find the new actual last message between these two users
+        const newLastMsg = await Message.findOne({
+            $or: [
+                { senderId: message.senderId, receiverId: message.receiverId },
+                { senderId: message.receiverId, receiverId: message.senderId },
+            ]
+        }).sort({ createdAt: -1 });
+
+        // Update LastMessage document between these two users
+        const lastMessageDoc = await LastMessage.findOne({
+            $or: [
+                { senderId: message.senderId, receiverId: message.receiverId },
+                { senderId: message.receiverId, receiverId: message.senderId },
+            ]
+        });
+
+        if (lastMessageDoc) {
+            if (!newLastMsg) {
+                lastMessageDoc.text = "";
+                lastMessageDoc.image = null;
+                lastMessageDoc.senderId = message.senderId;
+                lastMessageDoc.receiverId = message.receiverId;
+            } else {
+                lastMessageDoc.text = newLastMsg.text;
+                lastMessageDoc.image = newLastMsg.image;
+                lastMessageDoc.senderId = newLastMsg.senderId;
+                lastMessageDoc.receiverId = newLastMsg.receiverId;
+                lastMessageDoc.updatedAt = newLastMsg.updatedAt;
+            }
+
+            await LastMessage.updateOne(
+                { _id: lastMessageDoc._id },
+                {
+                    $set: {
+                        text: newLastMsg.text,
+                        image: newLastMsg.image,
+                        senderId: newLastMsg.senderId,
+                        receiverId: newLastMsg.receiverId,
+                        updatedAt: newLastMsg.updatedAt,
+                    }
+                },
+                { timestamps: false }
+            );
+
+            // Notify the other user in real time
+            const otherUserId = message.senderId.toString() === req.user._id.toString()
+                ? message.receiverId.toString()
+                : message.senderId.toString();
+
+            const receiverSocketId = getReceiverSocketId(otherUserId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("message:deleted", {
+                    deletedMessageId: message._id,
+                    newLastMessage: newLastMsg || null,
+                    conversationWith: req.user._id,
+                });
+            }
+        }
+
+        res.status(200).json({ message: "Message deleted successfully", newLastMessage: newLastMsg || null, });
+    } catch (error) {
+        console.log("Error in deleteMessageByMessageId: ", error.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}

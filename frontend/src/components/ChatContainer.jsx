@@ -7,7 +7,9 @@ import MessageInput from './MessageInput';
 import MessagesLoadingSkeleton from './MessagesLoadingSkeleton';
 import OutgoingCallScreen from './OutgoingCallScreen';
 import IncomingCallScreen from './IncomingCallScreen';
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, PencilIcon, Trash2Icon } from 'lucide-react';
+import { axiosInstance } from '../lib/axios';
+import toast from 'react-hot-toast';
 
 function ChatContainer() {
   const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall } = useChatStore();
@@ -40,6 +42,48 @@ function ChatContainer() {
       useChatStore.setState({ messages: updatedMessage });
     }
   }, [messages])
+
+  const handleDeleteMessage = async (message) => {
+    const updatedMessages = messages.filter(msg => msg._id !== message._id);
+    useChatStore.setState({ messages: updatedMessages });
+
+    const isLastMessage = messages.at(-1)?._id === message._id;
+
+    try {
+      const res = await axiosInstance.delete(`/messages/delete-message/${message._id}`);
+
+      if (res.status === 200) {
+        toast.success("Message deleted successfully!");
+
+        if (isLastMessage) {
+          const newLastMsg = res.data.newLastMessage;
+          const receiverId = message.senderId === authUser._id
+            ? message.receiverId
+            : message.senderId;
+
+          const updatedLastMessages = useChatStore.getState().lastMessages.map((msg) => {
+            if (msg.receiverId === receiverId || msg.senderId === receiverId) {
+              if (!newLastMsg) return { ...msg, text: "", image: null };
+              return {
+                ...msg,
+                text: newLastMsg.text,
+                senderId: newLastMsg.senderId,
+                receiverId: newLastMsg.receiverId,
+                isRead: newLastMsg.isRead,
+                image: newLastMsg.image,
+                updatedAt: newLastMsg.updatedAt,
+              };
+            }
+            return msg;
+          });
+
+          useChatStore.setState({ lastMessages: updatedLastMessages });
+        }
+      }
+    } catch (error) {
+      toast.error("Error while deleting the message");
+    }
+  }
 
   useEffect(() => {
     socket.on("read-message", handleReadMessage);
@@ -107,16 +151,14 @@ function ChatContainer() {
                               )}
 
                               <div
-                                className={`flex my-2 ${msg.senderId === authUser._id
-                                  ? "justify-end"
-                                  : "justify-start"
-                                  }`}
+                                className={`flex my-4 ${msg.senderId === authUser._id ? "justify-end" : "justify-start"}`}
                               >
                                 <div
-                                  className={`relative max-w-[75%] rounded-[28px] px-6 py-5 shadow-lg 
-                              ${msg.senderId === authUser._id ? "ml-auto bg-blue-600 text-white shadow-lg shadow-blue-600/20 rounded-[20px]"
-                                      : "bg-[#141C2E] text-white border border-white/5 rounded-[20px]"
-                                    }`}
+                                  className={`relative max-w-[75%] rounded-2xl px-3 py-2 shadow-lg group
+                                        ${msg.senderId === authUser._id
+                                      ? "ml-auto bg-blue-600 text-white shadow-lg shadow-blue-600/20 rounded-[20px]"
+                                      : "bg-[#141C2E] text-white border border-white/5 rounded-[20px]"}
+                                    `}
                                 >
                                   {msg.image && (
                                     <img
@@ -146,6 +188,27 @@ function ChatContainer() {
                                       )
                                     }
                                   </p>
+
+                                  {/* Hover actions */}
+                                  {msg.senderId === authUser._id && (
+                                    <div className="absolute -bottom-7 right-0 hidden group-hover:flex items-center gap-1  rounded-xl px-1 py-1 z-10">
+                                      <button
+                                        onClick={() => { handleDeleteMessage(msg) }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-red-400 transition text-xs"
+                                      >
+                                        <Trash2Icon size={15} />
+
+                                      </button>
+
+                                      <button
+                                        onClick={() => {/* handle edit */ }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+                                      >
+                                        <PencilIcon size={15} />
+
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </React.Fragment>
