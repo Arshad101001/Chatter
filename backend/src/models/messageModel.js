@@ -28,6 +28,11 @@ const messageSchema = mongoose.Schema({
         default: false,
     },
 
+    isEdited: {
+        type: Boolean,
+        default: false,
+    }, 
+
 }, { timestamps: true });
 
 const Message = mongoose.model("Message", messageSchema);

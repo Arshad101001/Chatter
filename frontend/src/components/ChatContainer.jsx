@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from '../store/useChatStore'
 import { useAuthStore } from "../store/useAuthStore";
 import ChatHeader from './ChatHeader';
@@ -17,6 +17,7 @@ function ChatContainer() {
   const { authUser } = useAuthStore()
 
   const messageEndRef = useRef(null);
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
@@ -83,6 +84,10 @@ function ChatContainer() {
     } catch (error) {
       toast.error("Error while deleting the message");
     }
+  }
+
+  const handleEditMessage = (message) => {
+    setMessage(message);
   }
 
   useEffect(() => {
@@ -174,10 +179,12 @@ function ChatContainer() {
 
                                   <p
                                     className={`flex gap-2 mt-1 text-xs ${msg.senderId === authUser._id
-                                      ? "text-blue-100 justify-end"
-                                      : "text-gray-400 justify-start"
-                                      }`}
+                                      ? "text-blue-100 justify-end" : "text-gray-400 justify-start"}`
+                                    }
                                   >
+                                    {
+                                      msg.isEdited && "Edited "
+                                    }
                                     {msgDate.toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -201,7 +208,7 @@ function ChatContainer() {
                                       </button>
 
                                       <button
-                                        onClick={() => {/* handle edit */ }}
+                                        onClick={() => { handleEditMessage(msg) }}
                                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
                                       >
                                         <PencilIcon size={15} />
@@ -227,7 +234,7 @@ function ChatContainer() {
             </div>
 
 
-            <MessageInput />
+            <MessageInput message={message || ""} isEdit={Boolean(message)} resetEdit={() => { setMessage(null) }} />
           </div>
         )
       }

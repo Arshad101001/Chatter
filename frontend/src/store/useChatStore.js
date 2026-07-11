@@ -89,6 +89,45 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    updateMessage: async (messageData) => {
+        const { messages, lastMessages } = get();
+        const { authUser } = useAuthStore.getState();
+
+        const isLastMessage = messages.at(-1)?._id === messageData._id;
+
+        // Optimistic update
+        const updatedMessages = messages.map((msg) => {
+            if (msg._id === messageData._id) {
+                return { ...msg, text: messageData.text, image: messageData.image, isEdited: true };
+            }
+            return msg;
+        });
+        set({ messages: updatedMessages });
+
+        if (isLastMessage) {
+            const receiverId = messageData.senderId === authUser._id
+                ? messageData.receiverId
+                : messageData.senderId;
+
+            const updatedLastMessages = lastMessages.map((msg) => {
+                if (msg.receiverId === receiverId || msg.senderId === receiverId) {
+                    return { ...msg, text: messageData.text, image: messageData.image, isEdited: true };
+                }
+                return msg;
+            });
+            set({ lastMessages: updatedLastMessages });
+        }
+
+        try {
+            await axiosInstance.put(`/messages/edit-message/${messageData._id}`, {
+                text: messageData.text,
+                image: messageData.image,
+            });
+        } catch (error) {
+            toast.error("Error updating message");
+        }
+    },
+
     sendMessage: async (messageData) => {
         const { selectedUser, messages } = get();
         const { authUser } = useAuthStore.getState()

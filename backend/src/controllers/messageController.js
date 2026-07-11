@@ -297,4 +297,71 @@ export const deleteMessageByMessageId = async (req, res) => {
         console.log("Error in deleteMessageByMessageId: ", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
-}
+};
+
+export const editMessage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { text, image } = req.body;
+
+        const message = await Message.findById(id);
+        if (!message) return res.status(404).json({ message: "Message not found" });
+
+        if (message.senderId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        // Update the message
+        const updatedMessage = await Message.findByIdAndUpdate(
+            id,
+            { $set: { text, image, isEdited: true } },
+            { new: true, timestamps: false }
+        );
+
+        // Check if this is the last message between these two users
+        const lastMsg = await Message.findOne({
+            $or: [
+                { senderId: message.senderId, receiverId: message.receiverId },
+                { senderId: message.receiverId, receiverId: message.senderId },
+            ]
+        }).sort({ createdAt: -1 });
+
+        const isLastMessage = lastMsg?._id.toString() === id;
+
+        if (isLastMessage) {
+            await LastMessage.updateOne(
+                {
+                    $or: [
+                        { senderId: message.senderId, receiverId: message.receiverId },
+                        { senderId: message.receiverId, receiverId: message.senderId },
+                    ]
+                },
+                {
+                    $set: {
+                        text,
+                        image,
+                        isEdited: true,
+                        updatedAt: updatedMessage.updatedAt,
+                    }
+                },
+                { timestamps: false }
+            );
+        }
+
+        // Notify other user via socket
+        const otherUserId = message.receiverId.toString();
+        const receiverSocketId = getReceiverSocketId(otherUserId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("message:edited", {
+                updatedMessage,
+                isLastMessage,
+                conversationWith: req.user._id,
+            });
+        }
+
+        res.status(200).json({ message: "Message updated", updatedMessage, isLastMessage });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error updating message" });
+    }
+};

@@ -4,8 +4,8 @@ import toast from 'react-hot-toast';
 import { ImageIcon, SendIcon, SmileIcon, XIcon } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 
-function MessageInput() {
-  const [text, setText] = useState("");
+function MessageInput({ message, isEdit, resetEdit }) {
+  const [text, setText] = useState(message.text || "");
   const [imagePreview, setImagePreview] = useState(null);
 
   const fileInputRef = useRef(null);
@@ -14,16 +14,30 @@ function MessageInput() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage } = useChatStore();
+  const { sendMessage, updateMessage } = useChatStore();
+
+  useEffect(() => {
+    setText(message.text || "");
+    textInputRef.current.focus();
+  }, [message])
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
 
-    sendMessage({
-      text: text.trim(),
-      image: imagePreview,
-    })
+    if (isEdit && message) {
+      updateMessage({
+        ...message,
+        text: text.trim(),
+        image: imagePreview,
+      });
+      resetEdit();
+    } else {
+      sendMessage({
+        text: text.trim(),
+        image: imagePreview,
+      })
+    }
 
     setText("");
     setImagePreview("");

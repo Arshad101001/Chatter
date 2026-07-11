@@ -62,7 +62,37 @@ function ChatPage() {
     if (selectedUser?._id === updatedUser._id) {
       useChatStore.getState().setSelectedUser(updatedUser);
     }
-  }, [])
+  }, []);
+
+  const handleMessageEdited = useCallback(({ updatedMessage, isLastMessage, conversationWith }) => {
+    const { messages, selectedUser } = useChatStore.getState();
+
+    // Update message in current chat if open
+    if (selectedUser?._id === conversationWith.toString()) {
+      const updatedMessages = messages.map((msg) =>
+        msg._id === updatedMessage._id ?
+          { ...msg, text: updatedMessage.text, image: updatedMessage.image, isEdited: true } : msg
+      );
+      useChatStore.setState({ messages: updatedMessages });
+    }
+
+    // Update lastMessages if it was the last message
+    if (isLastMessage) {
+      const updatedLastMessages = useChatStore.getState().lastMessages.map((msg) => {
+        if (msg.senderId === conversationWith.toString() || msg.receiverId === conversationWith.toString()) {
+          return {
+            ...msg,
+            text: updatedMessage.text,
+            image: updatedMessage.image,
+            isEdited: true,
+            updatedAt: updatedMessage.updatedAt,
+          };
+        }
+        return msg;
+      });
+      useChatStore.setState({ lastMessages: updatedLastMessages });
+    }
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -70,14 +100,16 @@ function ChatPage() {
   }, [socket]);
 
   useEffect(() => {
-    socket.on("incoming:call", handleIncomingCall)
-    socket.on("profile:updated", handleProfileUpdated)
+    socket.on("incoming:call", handleIncomingCall);
+    socket.on("profile:updated", handleProfileUpdated);
+    socket.on("message:edited", handleMessageEdited);
 
     return () => {
-      socket.off("incoming:call", handleIncomingCall)
-      socket.off("profile:updated", handleProfileUpdated)
+      socket.off("incoming:call", handleIncomingCall);
+      socket.off("profile:updated", handleProfileUpdated);
+      socket.off("message:edited", handleMessageEdited);
     }
-  }, [handleIncomingCall, handleProfileUpdated, socket]);
+  }, [handleIncomingCall, handleProfileUpdated, handleMessageEdited, socket]);
 
   return (
     <div className="h-full w-full bg-[#080D15] flex">
