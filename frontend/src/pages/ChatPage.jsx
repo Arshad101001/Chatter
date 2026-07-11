@@ -64,6 +64,37 @@ function ChatPage() {
     }
   }, []);
 
+  const handleMessageDeleted = useCallback(({ deletedMessageId, newLastMessage, conversationWith }) => {
+    // Remove message from current chat if it's open
+    const { messages, selectedUser } = useChatStore.getState();
+    if (selectedUser?._id === conversationWith.toString()) {
+      useChatStore.setState({
+        messages: messages.filter(msg => msg._id !== deletedMessageId)
+      });
+    }
+
+    // Update lastMessages list
+    const updatedLastMessages = useChatStore.getState().lastMessages.map((msg) => {
+      if (
+        msg.senderId === conversationWith.toString() ||
+        msg.receiverId === conversationWith.toString()
+      ) {
+        if (!newLastMessage) return { ...msg, text: "", image: null };
+        return {
+          ...msg,
+          text: newLastMessage.text,
+          image: newLastMessage.image,
+          senderId: newLastMessage.senderId,
+          receiverId: newLastMessage.receiverId,
+          updatedAt: newLastMessage.updatedAt,
+        };
+      }
+      return msg;
+    });
+
+    useChatStore.setState({ lastMessages: updatedLastMessages });
+  }, []);
+
   const handleMessageEdited = useCallback(({ updatedMessage, isLastMessage, conversationWith }) => {
     const { messages, selectedUser } = useChatStore.getState();
 
@@ -102,14 +133,16 @@ function ChatPage() {
   useEffect(() => {
     socket.on("incoming:call", handleIncomingCall);
     socket.on("profile:updated", handleProfileUpdated);
+    socket.on("message:deleted", handleMessageDeleted);
     socket.on("message:edited", handleMessageEdited);
 
     return () => {
       socket.off("incoming:call", handleIncomingCall);
       socket.off("profile:updated", handleProfileUpdated);
+      socket.off("message:deleted", handleMessageDeleted);
       socket.off("message:edited", handleMessageEdited);
     }
-  }, [handleIncomingCall, handleProfileUpdated, handleMessageEdited, socket]);
+  }, [handleIncomingCall, handleProfileUpdated, handleMessageDeleted, handleMessageEdited, socket]);
 
   return (
     <div className="h-full w-full bg-[#080D15] flex">
