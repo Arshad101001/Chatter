@@ -200,11 +200,11 @@ Socket.io is used **only for signaling** (exchanging offer/answer/ICE candidates
 
 ## Future Updates
 
+- [x] ✅ ~~Message read receipts (double tick)~~
+- [x] 🗑️ ~~Delete and edit messages~~
 - [ ] 🔒 End-to-end encryption for messages
 - [ ] 👥 Group chat support
 - [ ] 📞 Group video/audio calls
-- [ ] ✅ Message read receipts (double tick)
-- [ ] 🗑️ Delete and edit messages
 - [ ] 💬 Message reactions (emoji reactions)
 - [ ] 📌 Pin messages
 - [ ] 🔇 Mute conversations
