@@ -3,6 +3,7 @@ import { useChatStore } from "../store/useChatStore";
 import toast from 'react-hot-toast';
 import { ImageIcon, SendIcon, SmileIcon, XIcon } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
+import { useAuthStore } from '../store/useAuthStore';
 
 function MessageInput({ message, isEdit, resetEdit }) {
   const [text, setText] = useState(message.text || "");
@@ -10,11 +11,14 @@ function MessageInput({ message, isEdit, resetEdit }) {
 
   const fileInputRef = useRef(null);
   const textInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage, updateMessage } = useChatStore();
+  const { sendMessage, updateMessage, selectedUser } = useChatStore();
+  const socket = useAuthStore.getState().socket;
+
 
   useEffect(() => {
     setText(message.text || "");
@@ -77,6 +81,17 @@ function MessageInput({ message, isEdit, resetEdit }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleTyping = (e) => {
+    setText(e.target.value);
+
+    socket.emit("typing:start", { to: selectedUser._id });
+
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("typing:stop", { to: selectedUser._id });
+    }, 1500);
+  };
+
   return (
     <div className="border-t border-white/5 bg-[#0C1120] px-6 py-4">
 
@@ -124,9 +139,7 @@ function MessageInput({ message, isEdit, resetEdit }) {
           type="text"
           value={text}
           ref={textInputRef}
-          onChange={(e) => {
-            setText(e.target.value);
-          }}
+          onChange={handleTyping}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               handleSendMessage(e);

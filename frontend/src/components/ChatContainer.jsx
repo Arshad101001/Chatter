@@ -12,7 +12,7 @@ import { axiosInstance } from '../lib/axios';
 import toast from 'react-hot-toast';
 
 function ChatContainer() {
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping } = useChatStore();
   const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
@@ -31,7 +31,7 @@ function ChatContainer() {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "auto" });
     }
-  }, [messages, isCalling]);
+  }, [messages, isCalling, isTyping]);
 
   const handleReadMessage = useCallback((messagePartnerId) => {
     if (selectedUser._id === messagePartnerId.messagePartnerId) {
@@ -223,6 +223,21 @@ function ChatContainer() {
                         })
 
                       }
+
+                      {/* show typing when other user is typing */}
+                      {isTyping && (
+                        <div className="flex justify-start mb-0">
+                          <div className="flex items-center gap-2  px-2 py-3 text-sm">
+                            <p className='text-sm text-gray-400'>{selectedUser.fullName} is typing </p>
+                            <div className="flex items-center gap-1">
+                              <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Scroll target */}
                       <div ref={messageEndRef} />
                     </div>

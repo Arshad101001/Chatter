@@ -102,6 +102,20 @@ io.on("connection", (socket) => {
         socket.to(receiverSocketId).emit("read-message", { messagePartnerId });
     });
 
+    socket.on("typing:start", ({ to }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("typing:start", { from: userId });
+        }
+    });
+
+    socket.on("typing:stop", ({ to }) => {
+        const receiverSocketId = userSocketMap[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("typing:stop", { from: userId });
+        }
+    });
+
     socket.on("disconnect", () => {
         console.log("A user disconnected", socket.user.fullName);
         delete userSocketMap[userId];

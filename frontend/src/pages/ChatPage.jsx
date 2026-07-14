@@ -125,6 +125,20 @@ function ChatPage() {
     }
   }, []);
 
+  const handleTypingStart = useCallback(({ from }) => {
+    const { selectedUser } = useChatStore.getState();
+    if (selectedUser._id === from) {
+      useChatStore.getState().setIsTyping(true);
+    }
+  }, []);
+
+  const handleTypingStop = useCallback(({ from }) => {
+    const { selectedUser } = useChatStore.getState();
+    if (selectedUser._id === from) {
+      useChatStore.getState().setIsTyping(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
     socket.emit("joinRoom", { roomId: useAuthStore.getState().authUser._id });
@@ -135,14 +149,19 @@ function ChatPage() {
     socket.on("profile:updated", handleProfileUpdated);
     socket.on("message:deleted", handleMessageDeleted);
     socket.on("message:edited", handleMessageEdited);
+    socket.on("typing:start", handleTypingStart);
+    socket.on("typing:stop", handleTypingStop);
 
     return () => {
       socket.off("incoming:call", handleIncomingCall);
       socket.off("profile:updated", handleProfileUpdated);
       socket.off("message:deleted", handleMessageDeleted);
       socket.off("message:edited", handleMessageEdited);
+      socket.off("typing:start", handleTypingStart);
+      socket.off("typing:stop", handleTypingStop);
+
     }
-  }, [handleIncomingCall, handleProfileUpdated, handleMessageDeleted, handleMessageEdited, socket]);
+  }, [handleIncomingCall, handleProfileUpdated, handleMessageDeleted, handleMessageEdited, handleTypingStart, handleTypingStop, socket]);
 
   return (
     <div className="h-full w-full bg-[#080D15] flex">

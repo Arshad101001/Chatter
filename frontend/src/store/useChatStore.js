@@ -17,14 +17,16 @@ export const useChatStore = create((set, get) => ({
     localStream: null,
     isUsersLoading: false,
     isMessagesLoading: false,
+    isTyping: false,
 
     setActiveTab: (tab) => set({ activeTab: tab }),
-    setSelectedUser: (selectedUser) => set({ selectedUser }),
+    setSelectedUser: (selectedUser) => set({ selectedUser, isTyping: false }),
     setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId }),
     setIsCalling: (isCalling) => set({ isCalling }),
     setCallType: (callType) => set({ callType }),
     setIncomingCall: (incomingCall) => set({ incomingCall }),
     setLocalStream: (stream) => set({ localStream: stream }),
+    setIsTyping: (val) => set({ isTyping: val }),
 
     updateUserInList: (updatedUser) => set((state) => ({
         chats: state.chats?.map((c) =>
