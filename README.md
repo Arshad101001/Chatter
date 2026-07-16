@@ -203,7 +203,7 @@ Socket.io is used **only for signaling** (exchanging offer/answer/ICE candidates
 - [x] ✅ ~~Message read receipts (double tick)~~
 - [x] 🗑️ ~~Delete and edit messages~~
 - [x] 🗑️ ~~Typing indicator~~
-- [ ] 🗑️ ~~Reply to message~~
+- [x] 🗑️ ~~Reply to message~~
 - [ ] 🔒 End-to-end encryption for messages
 - [ ] 👥 Group chat support
 - [ ] 📞 Group video/audio calls
