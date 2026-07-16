@@ -31,7 +31,14 @@ const messageSchema = mongoose.Schema({
     isEdited: {
         type: Boolean,
         default: false,
-    }, 
+    },
+
+    replyTo: {
+        _id: { type: mongoose.Schema.Types.ObjectId },
+        text: { type: String },
+        image: { type: String },
+        senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
 
 }, { timestamps: true });
 

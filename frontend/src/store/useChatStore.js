@@ -18,6 +18,7 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
     isTyping: false,
+    replyTo: null,
 
     setActiveTab: (tab) => set({ activeTab: tab }),
     setSelectedUser: (selectedUser) => set({ selectedUser, isTyping: false }),
@@ -27,6 +28,8 @@ export const useChatStore = create((set, get) => ({
     setIncomingCall: (incomingCall) => set({ incomingCall }),
     setLocalStream: (stream) => set({ localStream: stream }),
     setIsTyping: (val) => set({ isTyping: val }),
+    setReplyTo: (msg) => set({ replyTo: msg }),
+    clearReplyTo: () => set({ replyTo: null }),
 
     updateUserInList: (updatedUser) => set((state) => ({
         chats: state.chats?.map((c) =>
@@ -142,6 +145,7 @@ export const useChatStore = create((set, get) => ({
             receiverId: selectedUser._id,
             text: messageData.text,
             image: messageData.image,
+            replyTo: messageData.replyTo || null,
             createdAt: new Date().toISOString(),
             isOptimistic: true,  // flag to identify optimistic messages 
         };

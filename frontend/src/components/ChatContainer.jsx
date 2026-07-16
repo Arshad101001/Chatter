@@ -7,12 +7,12 @@ import MessageInput from './MessageInput';
 import MessagesLoadingSkeleton from './MessagesLoadingSkeleton';
 import OutgoingCallScreen from './OutgoingCallScreen';
 import IncomingCallScreen from './IncomingCallScreen';
-import { Check, CheckCheck, PencilIcon, Trash2Icon } from 'lucide-react';
+import { Check, CheckCheck, PencilIcon, ReplyIcon, Trash2Icon } from 'lucide-react';
 import { axiosInstance } from '../lib/axios';
 import toast from 'react-hot-toast';
 
 function ChatContainer() {
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo } = useChatStore();
   const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
@@ -173,6 +173,23 @@ function ChatContainer() {
                                     />
                                   )}
 
+                                  {msg.replyTo && (
+                                    <div className={`mb-2 px-3 py-2 rounded-xl border-l-2 border-blue-400 text-xs ${msg.senderId === authUser._id
+                                      ? "bg-blue-700/40 text-blue-100"
+                                      : "bg-[#1A2440] text-gray-400"
+                                      }`}>
+                                      <p className="font-semibold text-blue-300 mb-0.5">
+                                        {msg.replyTo.senderId === authUser._id ? "You" : selectedUser.fullName}
+                                      </p>
+                                      {msg.replyTo.image && !msg.replyTo.text && (
+                                        <p className="italic">📷 Image</p>
+                                      )}
+                                      {msg.replyTo.text && (
+                                        <p className="truncate max-w-[200px]">{msg.replyTo.text}</p>
+                                      )}
+                                    </div>
+                                  )}
+
                                   {msg.text && (
                                     <p className="leading-5 text-[16px]">{msg.text}</p>
                                   )}
@@ -197,25 +214,36 @@ function ChatContainer() {
                                   </p>
 
                                   {/* Hover actions */}
-                                  {msg.senderId === authUser._id && (
-                                    <div className="absolute -bottom-7 right-0 hidden group-hover:flex items-center gap-1  rounded-xl px-1 py-1 z-10">
-                                      <button
-                                        onClick={() => { handleDeleteMessage(msg) }}
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-red-400 transition text-xs"
-                                      >
-                                        <Trash2Icon size={15} />
 
-                                      </button>
+                                  <div className="absolute -bottom-7 right-0 hidden group-hover:flex items-center gap-1  rounded-xl px-1 py-1 z-10">
+                                    {msg.senderId === authUser._id && (
+                                      <>
+                                        <button
+                                          onClick={() => { handleDeleteMessage(msg) }}
+                                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-red-400 transition text-xs"
+                                        >
+                                          <Trash2Icon size={15} />
 
-                                      <button
-                                        onClick={() => { handleEditMessage(msg) }}
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
-                                      >
-                                        <PencilIcon size={15} />
+                                        </button>
 
-                                      </button>
-                                    </div>
-                                  )}
+                                        <button
+                                          onClick={() => { handleEditMessage(msg) }}
+                                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+                                        >
+                                          <PencilIcon size={15} />
+
+                                        </button>
+                                      </>
+                                    )}
+                                    <button
+                                      onClick={() => setReplyTo(msg)}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+                                    >
+                                      <ReplyIcon size={15} />
+
+                                    </button>
+                                  </div>
+
                                 </div>
                               </div>
                             </React.Fragment>

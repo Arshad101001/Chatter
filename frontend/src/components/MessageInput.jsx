@@ -16,13 +16,13 @@ function MessageInput({ message, isEdit, resetEdit }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage, updateMessage, selectedUser } = useChatStore();
+  const { sendMessage, updateMessage, selectedUser, replyTo, clearReplyTo } = useChatStore();
+  const { authUser } = useAuthStore();
   const socket = useAuthStore.getState().socket;
 
 
   useEffect(() => {
     setText(message.text || "");
-    textInputRef.current.focus();
   }, [message])
 
   const handleSendMessage = (e) => {
@@ -40,11 +40,18 @@ function MessageInput({ message, isEdit, resetEdit }) {
       sendMessage({
         text: text.trim(),
         image: imagePreview,
-      })
+        replyTo: replyTo ? {
+          _id: replyTo._id,
+          text: replyTo.text,
+          image: replyTo.image,
+          senderId: replyTo.senderId,
+        } : null,
+      });
     }
 
     setText("");
     setImagePreview("");
+    clearReplyTo();
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -69,7 +76,7 @@ function MessageInput({ message, isEdit, resetEdit }) {
     if (textInputRef.current) {
       textInputRef.current.focus();
     }
-  }, []);
+  }, [replyTo, message]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -94,6 +101,28 @@ function MessageInput({ message, isEdit, resetEdit }) {
 
   return (
     <div className="border-t border-white/5 bg-[#0C1120] px-6 py-4">
+
+      {replyTo && (
+        <div className="mx-auto max-w-3xl mb-2 flex items-start gap-3 bg-[#141C2E] border border-white/5 border-l-2 border-l-blue-400 rounded-xl px-4 py-2.5">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-blue-400 mb-0.5">
+              {replyTo.senderId === authUser._id ? "You" : selectedUser.fullName}
+            </p>
+            {replyTo.image && !replyTo.text && (
+              <p className="text-xs text-gray-400 italic">📷 Image</p>
+            )}
+            {replyTo.text && (
+              <p className="text-xs text-gray-400 truncate">{replyTo.text}</p>
+            )}
+          </div>
+          <button
+            onClick={clearReplyTo}
+            className="text-gray-500 hover:text-white transition shrink-0 mt-0.5"
+          >
+            <XIcon size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Image Preview */}
       {imagePreview && (
