@@ -1,12 +1,13 @@
 import React, { useRef, useState } from 'react'
-import { LogOutIcon, VolumeOffIcon, Volume2Icon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuthStore } from '../store/useAuthStore';
 import { useChatStore } from '../store/useChatStore';
 import NewChatPopup from './Newchatpopup';
+import PopupOptions from './PopupOptions';
 
 function ProfileHeader() {
   const { logout, authUser, updateProfile } = useAuthStore();
-  const [showNewChat, setShowNewChat] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   return (
     <div className="border-b border-white/5 px-4 py-4 bg-[#0F141D]">
@@ -28,13 +29,13 @@ function ProfileHeader() {
         {/* Right Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={() => setShowNewChat(true)}
-            className='flex items-center justify-center rounded-full bg-blue-600'
+            onClick={() => setShowPopup(true)}
+            className='flex items-center justify-center rounded-full bg-blue-600 cursor-pointer'
           >
             <Plus size={45} strokeWidth={1.5} />
           </button>
 
-          {showNewChat && <NewChatPopup onClose={() => setShowNewChat(false)} />}
+          {showPopup && <PopupOptions onClose={() => setShowPopup(false)} />}
         </div>
 
       </div>

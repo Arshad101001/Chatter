@@ -3,7 +3,7 @@ import { XIcon, SearchIcon, LoaderIcon, UserIcon } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { axiosInstance } from "../lib/axios";
 
-function NewChatPopup({ onClose }) {
+function NewChatPopup({ onClose, onParentClose }) {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -44,7 +44,7 @@ function NewChatPopup({ onClose }) {
         } catch (err) {
             if (err.response?.status === 404) {
                 setError("No user found with this email.");
-                
+
             } else {
                 setError("Something went wrong. Try again.");
             }
@@ -57,6 +57,7 @@ function NewChatPopup({ onClose }) {
         if (!foundUser) return;
         setSelectedUser(foundUser);
         onClose();
+        onParentClose();
     };
 
     const handleKeyDown = (e) => {
