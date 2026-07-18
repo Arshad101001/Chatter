@@ -91,7 +91,7 @@ function NewChatPopup({ onClose, onParentClose }) {
 
                 {/* Input */}
                 <div className="flex gap-2">
-                    <div className="flex-1 flex items-center gap-2 rounded-xl bg-[#141C2E] border border-white/5 px-4 py-3 focus-within:border-blue-500/50 transition">
+                    <div className="flex-1 flex items-center gap-2 rounded-xl bg-[#141C2E] border border-white/5 px-4 py-3 focus-within:border-blue-500 transition">
                         <SearchIcon className="h-4 w-4 text-gray-500 shrink-0" />
                         <input
                             ref={inputRef}
