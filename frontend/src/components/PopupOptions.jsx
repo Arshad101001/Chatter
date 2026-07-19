@@ -1,14 +1,13 @@
 import { ChevronRight, XIcon } from 'lucide-react'
 import React, { useState } from 'react'
 import NewChatPopup from './Newchatpopup';
+import CreateGroupPopup from './CreateGroupPopup';
 
 function PopupOptions({ onClose }) {
 
     const [showNewChat, setShowNewChat] = useState(false);
+    const [showCreateGroupForm, setShowCreateGroupForm] = useState(false);
 
-    const handleClick = () => {
-        setShowNewChat(true);
-    }
     return (
         <>
             <div
@@ -28,7 +27,7 @@ function PopupOptions({ onClose }) {
                 </div>
                 <div
                     className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-[#141C2E] border border-white/5 hover:border-blue-500/30 hover:bg-[#1A2440] cursor-pointer transition"
-                    onClick={handleClick}
+                    onClick={() => setShowNewChat(true)}
                 >
 
                     <div className="flex-1 min-w-0">
@@ -41,6 +40,7 @@ function PopupOptions({ onClose }) {
 
                 <div
                     className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-[#141C2E] border border-white/5 hover:border-blue-500/30 hover:bg-[#1A2440] cursor-pointer transition"
+                    onClick={() => setShowCreateGroupForm(true)}
                 >
 
                     <div className="flex-1 min-w-0">
@@ -50,6 +50,7 @@ function PopupOptions({ onClose }) {
                 </div>
 
                 {showNewChat && <NewChatPopup onClose={() => setShowNewChat(false)} onParentClose={onClose} />}
+                {showCreateGroupForm && <CreateGroupPopup onClose={() => setShowCreateGroupForm(false)} onParentClose={onClose} />}
             </div>
         </>
     )
