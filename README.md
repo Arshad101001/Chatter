@@ -201,6 +201,7 @@ Socket.io is used **only for signaling** (exchanging offer/answer/ICE candidates
 ## Future Updates
 
 - [x] ✅ ~~Message read receipts (double tick)~~
+- [x] 🔍 ~~Search chat partners~~
 - [x] 🗑️ ~~Delete and edit messages~~
 - [x] 🗑️ ~~Typing indicator~~
 - [x] 🗑️ ~~Reply to message~~
