@@ -61,7 +61,7 @@ export const getUserGroups = async (req, res) => {
         const userId = req.user._id;
 
         const groups = await Group.find({ members: userId })
-            .populate("members", "username profilePic")
+            .populate("members", "fullName profilePic")
             .sort({ "lastMessage.createdAt": -1 });
 
         res.status(200).json(groups);
