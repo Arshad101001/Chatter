@@ -1,5 +1,5 @@
 import express from "express";
-import { getChatPartners, getLastMessages, getMessagesByUserId, getUserByEmail, sendMessage, updateReadStatus, deleteMessageByMessageId, editMessage } from "../controllers/messageController.js";
+import { getChatPartners, getLastMessages, getMessagesByUserId, getUserByEmail, sendMessage, updateReadStatus, deleteMessageByMessageId, editMessage, getGroupMessages } from "../controllers/messageController.js";
 import { protectRoute } from "../middleware/authMiddleware.js";
 import { arcjetProtection } from "../middleware/arcjetMiddleware.js";
 
@@ -17,5 +17,8 @@ router.post("/send/:id", sendMessage);
 router.put("/read/:senderId", updateReadStatus);
 router.delete("/delete-message/:messageId", deleteMessageByMessageId);
 router.put("/edit-message/:id", editMessage);
+
+// groups
+router.get("/group/:groupId", getGroupMessages);
 
 export default router;

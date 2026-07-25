@@ -141,7 +141,6 @@ export const sendMessage = async (req, res) => {
     }
 };
 
-
 export const getChatPartners = async (req, res) => {
     try {
         const loggedInUserId = req.user._id;
@@ -364,5 +363,21 @@ export const editMessage = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Error updating message" });
+    }
+};
+
+// groups
+export const getGroupMessages = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        const messages = await Message.find({ groupId })
+            .populate("senderId", "username fullName profilePic")
+            .sort({ createdAt: 1 });
+
+        res.status(200).json(messages);
+    } catch (error) {
+        console.log("Error in getGroupMessages:", error.message);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
