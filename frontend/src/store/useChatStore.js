@@ -16,12 +16,17 @@ export const useChatStore = create((set, get) => ({
     incomingCall: null,
     localStream: null,
     isUsersLoading: false,
+    isGroupsLoading: false,
     isMessagesLoading: false,
     isTyping: false,
     replyTo: null,
+    groups: [],
+    selectedGroup: null,
+    isGroupMessagesLoading: false,
 
     setActiveTab: (tab) => set({ activeTab: tab }),
-    setSelectedUser: (selectedUser) => set({ selectedUser, isTyping: false }),
+    setSelectedUser: (selectedUser) => set({ selectedUser, selectedGroup: null, messages: [], isTyping: false }),
+    setSelectedGroup: (selectedGroup) => set({ selectedGroup, selectedUser: null, messages: [], isTyping: false }),
     setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId }),
     setIsCalling: (isCalling) => set({ isCalling }),
     setCallType: (callType) => set({ callType }),
@@ -30,6 +35,8 @@ export const useChatStore = create((set, get) => ({
     setIsTyping: (val) => set({ isTyping: val }),
     setReplyTo: (msg) => set({ replyTo: msg }),
     clearReplyTo: () => set({ replyTo: null }),
+    setGroups: (groups) => set({ groups }),
+    appendGroupMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
 
     updateUserInList: (updatedUser) => set((state) => ({
         chats: state.chats?.map((c) =>
@@ -55,6 +62,29 @@ export const useChatStore = create((set, get) => ({
             toast.error(error.response.data.message)
         } finally {
             set({ isUsersLoading: false });
+        }
+    },
+
+    createGroup: async ({ name, members, groupImage }) => {
+        try {
+            const res = await axiosInstance.post("/group/create", { name, members, groupImage });
+            set((state) => ({ groups: [...state.groups, res.data] }));
+            console.log("Group created:", res.data);
+            return res.data;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to create group");
+        }
+    },
+
+    getMyGroups: async () => {
+        set({ isGroupsLoading: true });
+        try {
+            const res = await axiosInstance.get("/group/user");
+            set({ groups: res.data });
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to load groups");
+        } finally {
+            set({ isGroupsLoading: false });
         }
     },
 
@@ -89,6 +119,18 @@ export const useChatStore = create((set, get) => ({
         } catch (error) {
             toast.error(error.response?.data?.message || "Something went wrong")
 
+        } finally {
+            set({ isMessagesLoading: false });
+        }
+    },
+
+    getGroupMessages: async (groupId) => {
+        set({ isMessagesLoading: true });
+        try {
+            const res = await axiosInstance.get(`/messages/group/${groupId}`);
+            set({ messages: res.data });
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to load messages");
         } finally {
             set({ isMessagesLoading: false });
         }
@@ -183,6 +225,17 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    sendGroupMessage: (messageData) => {
+        const { selectedGroup } = get();
+        const socket = useAuthStore.getState().socket;
+
+        socket.emit("sendGroupMessage", {
+            groupId: selectedGroup._id,
+            text: messageData.text,
+            image: messageData.image,
+        });
+    },
+
     subscribeToMessages: () => {
         const { selectedUser } = get();
 
@@ -203,6 +256,32 @@ export const useChatStore = create((set, get) => ({
     unsubscribeFromMessages: () => {
         const socket = useAuthStore.getState().socket;
         socket.off("newMessage");
+    },
+
+    // useChatStore.js (or useGroupStore.js)
+    subscribeToGroupMessages: () => {
+        const { selectedGroup } = get();
+        if (!selectedGroup) return;
+
+        const socket = useAuthStore.getState().socket;
+
+        socket.on("groupMessageEdited", (updatedMessage) => {
+            const { messages } = get();
+            set({
+                messages: messages.map(m => m._id === updatedMessage._id ? updatedMessage : m),
+            });
+        });
+
+        socket.on("groupMessageDeleted", ({ messageId }) => {
+            const { messages } = get();
+            set({ messages: messages.filter(m => m._id !== messageId) });
+        });
+    },
+
+    unsubscribeFromGroupMessages: () => {
+        const socket = useAuthStore.getState().socket;
+        socket.off("groupMessageEdited");
+        socket.off("groupMessageDeleted");
     },
 
     updateChatList: (chatPartner, message) => {
