@@ -12,7 +12,7 @@ import { Link } from 'react-router';
 import SearchChatPartner from '../components/SearchChatPartner';
 
 function ChatPage() {
-  const { activeTab, selectedUser, isCalling, incomingCall, setIncomingCall } = useChatStore();
+  const { activeTab, selectedUser, isCalling, incomingCall, setIncomingCall, selectedGroup } = useChatStore();
   const { logout, authUser, updateProfile } = useAuthStore();
 
   const socket = useAuthStore.getState().socket;
@@ -127,14 +127,14 @@ function ChatPage() {
 
   const handleTypingStart = useCallback(({ from }) => {
     const { selectedUser } = useChatStore.getState();
-    if (selectedUser._id === from) {
+    if (selectedUser?._id === from) {
       useChatStore.getState().setIsTyping(true);
     }
   }, []);
 
   const handleTypingStop = useCallback(({ from }) => {
     const { selectedUser } = useChatStore.getState();
-    if (selectedUser._id === from) {
+    if (selectedUser?._id === from) {
       useChatStore.getState().setIsTyping(false);
     }
   }, []);
@@ -268,7 +268,7 @@ function ChatPage() {
           <IncomingCallScreen />
         ) : activeIcon === "chats" ? (
           <div className="flex-1 flex flex-col bg-[#0F1728] min-w-0 min-h-0 overflow-hidden">
-            {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
+            {(selectedGroup || selectedUser) ? <ChatContainer /> : <NoConversationPlaceholder />}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-[#0F1728] min-w-0 min-h-0 overflow-hidden gap-4">

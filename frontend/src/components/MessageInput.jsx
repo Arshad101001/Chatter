@@ -16,10 +16,11 @@ function MessageInput({ message, isEdit, resetEdit }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage, updateMessage, selectedUser, replyTo, clearReplyTo } = useChatStore();
+  const { sendMessage, updateMessage, selectedUser, selectedGroup, sendGroupMessage, replyTo, clearReplyTo, } = useChatStore();
   const { authUser } = useAuthStore();
   const socket = useAuthStore.getState().socket;
 
+  const isGroup = !!selectedGroup;
 
   useEffect(() => {
     setText(message.text || "");
@@ -36,6 +37,11 @@ function MessageInput({ message, isEdit, resetEdit }) {
         image: imagePreview,
       });
       resetEdit();
+    } else if (isGroup) {
+      sendGroupMessage({
+        text: text.trim(),
+        image: imagePreview,
+      });
     } else {
       sendMessage({
         text: text.trim(),
@@ -91,18 +97,22 @@ function MessageInput({ message, isEdit, resetEdit }) {
   const handleTyping = (e) => {
     setText(e.target.value);
 
-    socket.emit("typing:start", { to: selectedUser._id });
+    // typing indicators skipped for groups for now — only for 1:1
+    if (!isGroup) {
+      socket.emit("typing:start", { to: selectedUser._id });
 
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { to: selectedUser._id });
-    }, 1500);
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("typing:stop", { to: selectedUser._id });
+      }, 1500);
+    }
   };
 
   return (
     <div className="border-t border-white/5 bg-[#0C1120] px-6 py-4">
 
-      {replyTo && (
+      {/* Reply preview only applies to 1:1 for now */}
+      {!isGroup && replyTo && (
         <div className="mx-auto max-w-3xl mb-2 flex items-start gap-3 bg-[#141C2E] border border-white/5 border-l-2 border-l-blue-400 rounded-xl px-4 py-2.5">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-blue-400 mb-0.5">
@@ -150,7 +160,6 @@ function MessageInput({ message, isEdit, resetEdit }) {
         className="mx-auto flex max-w-3xl items-center gap-3 rounded-full border border-white/8 bg-[#141C2E] px-4 py-2.5 shadow-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
       >
 
-        {/* Image Button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -163,7 +172,6 @@ function MessageInput({ message, isEdit, resetEdit }) {
           <ImageIcon size={18} />
         </button>
 
-        {/* Input */}
         <input
           type="text"
           value={text}
@@ -178,7 +186,6 @@ function MessageInput({ message, isEdit, resetEdit }) {
           className="flex-1 bg-transparent text-white outline-none placeholder:text-gray-500"
         />
 
-        {/* Send Button */}
         <button
           type="submit"
           disabled={!text.trim() && !imagePreview}
@@ -200,7 +207,7 @@ function MessageInput({ message, isEdit, resetEdit }) {
             <div className="absolute bottom-16 right-0 z-50">
               <EmojiPicker
                 onEmojiClick={(emojiData) => {
-                  setText((prev) => prev + emojiData.emoji); // swap setText for whatever your message state setter is called
+                  setText((prev) => prev + emojiData.emoji);
                 }}
                 theme="dark"
                 skinTonesDisabled
@@ -213,7 +220,6 @@ function MessageInput({ message, isEdit, resetEdit }) {
           )}
         </div>
 
-        {/* Hidden File Input */}
         <input
           type="file"
           accept="image/*"

@@ -6,23 +6,26 @@ import OutgoingCallScreen from './OutgoingCallScreen';
 import peer from '../services/peer';
 
 function ChatHeader() {
-    const { selectedUser, setSelectedUser, setIsCalling, setCallType, remoteSocketId, setLocalStream } = useChatStore();
+    const { selectedUser, setSelectedUser, setIsCalling, setCallType, remoteSocketId, setLocalStream, selectedGroup, setSelectedGroup } = useChatStore();
 
     const socket = useAuthStore.getState().socket;
     const { onlineUsers } = useAuthStore();
-    const isOnline = onlineUsers.includes(selectedUser._id);
+    const isOnline = selectedUser && onlineUsers.includes(selectedUser._id);
 
 
     useEffect(() => {
         const handleEscKey = (event) => {
-            if (event.key === "Escape") setSelectedUser(null)
+            if (event.key === "Escape") {
+                setSelectedUser(null)
+                setSelectedGroup(null)
+            }
         }
 
         window.addEventListener("keydown", handleEscKey)
 
         return () => window.removeEventListener("keydown", handleEscKey);
 
-    }, [setSelectedUser]);
+    }, [setSelectedUser, setSelectedGroup]);
 
     const handleCallUser = useCallback(async (type) => {
         setIsCalling(true);
@@ -52,6 +55,10 @@ function ChatHeader() {
 
     }, [selectedUser, socket]);
 
+    const handleClose = () => {
+        setSelectedUser(null);
+        setSelectedGroup(null);
+    }
 
     return (
         <div className="flex items-center justify-between border-b border-white/5 bg-[#0C1120] px-6 py-4">
@@ -61,8 +68,8 @@ function ChatHeader() {
 
                 <div className="relative">
                     <img
-                        src={selectedUser.profilePic || "/avatar.png"}
-                        alt={selectedUser.fullName}
+                        src={selectedUser?.profilePic || selectedGroup?.groupImage || "/avatar.png"}
+                        alt={selectedUser?.fullName || selectedGroup?.name}
                         className="h-12 w-12 rounded-full object-cover"
                     />
 
@@ -72,11 +79,13 @@ function ChatHeader() {
                 </div>
 
                 <div>
-                    <h2 className="text-base font-semibold text-white">{selectedUser.fullName}</h2>
+                    <h2 className="text-base font-semibold text-white">{selectedUser?.fullName || selectedGroup?.name}</h2>
                     <div className="mt-0.5 flex items-center gap-1.5">
-                        <span className={`text-[10px] font-semibold uppercase tracking-widest ${isOnline ? "text-green-400" : "text-gray-500"}`}>
-                            {isOnline ? "Online" : "Offline"}
-                        </span>
+                        {selectedUser && (
+                            <span className={`text-[10px] font-semibold uppercase tracking-widest ${isOnline ? "text-green-400" : "text-gray-500"}`}>
+                                {isOnline ? "Online" : "Offline"}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -102,7 +111,7 @@ function ChatHeader() {
 
                 {/* Close (mobile) */}
                 <button
-                    onClick={() => setSelectedUser(null)}
+                    onClick={handleClose}
                     className="ml-2 rounded-full p-2 text-gray-400 transition hover:bg-[#1B2434] hover:text-white md:hidden"
                 >
                     <XIcon size={20} />

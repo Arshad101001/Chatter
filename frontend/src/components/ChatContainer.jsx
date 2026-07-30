@@ -12,7 +12,7 @@ import { axiosInstance } from '../lib/axios';
 import toast from 'react-hot-toast';
 
 function ChatContainer() {
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo, selectedGroup, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages } = useChatStore();
   const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
@@ -20,12 +20,16 @@ function ChatContainer() {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    getMessagesByUserId(selectedUser._id);
-    subscribeToMessages()
-
-    // clean up
-    return () => unsubscribeFromMessages()
-  }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages])
+    if (selectedGroup) {
+      getGroupMessages(selectedGroup._id);
+      subscribeToGroupMessages();
+      return () => unsubscribeFromGroupMessages();
+    } else if (selectedUser) {
+      getMessagesByUserId(selectedUser._id);
+      subscribeToMessages();
+      return () => unsubscribeFromMessages();
+    }
+  }, [selectedUser, selectedGroup, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages]);
 
   useEffect(() => {
     if (messageEndRef.current) {
@@ -34,7 +38,7 @@ function ChatContainer() {
   }, [messages, isCalling, isTyping]);
 
   const handleReadMessage = useCallback((messagePartnerId) => {
-    if (selectedUser._id === messagePartnerId.messagePartnerId) {
+    if (selectedUser?._id === messagePartnerId.messagePartnerId) {
       const updatedMessage = messages.map((msg) => {
         if (msg.senderId === authUser._id) return { ...msg, isRead: true }
         return msg;
@@ -139,6 +143,7 @@ function ChatContainer() {
                     <div className='w-full space-y-4 sm:space-y-6'>
                       {
                         messages.map((msg, index) => {
+                          const isMe = msg.senderId._id === authUser._id || msg.senderId === authUser._id;
                           const msgDate = new Date(msg.createdAt);
                           const prevMsg = messages[index - 1];
                           const prevDate = prevMsg ? new Date(prevMsg.createdAt) : null;
@@ -156,94 +161,103 @@ function ChatContainer() {
                               )}
 
                               <div
-                                className={`flex my-4 ${msg.senderId === authUser._id ? "justify-end" : "justify-start"}`}
+                                className={`flex my-4 ${isMe ? "justify-end" : "justify-start"}`}
                               >
-                                <div
-                                  className={`relative max-w-[75%] rounded-2xl px-3 py-2 shadow-lg group
-                                        ${msg.senderId === authUser._id
-                                      ? "ml-auto bg-blue-600 text-white shadow-lg shadow-blue-600/20 rounded-[20px]"
-                                      : "bg-[#141C2E] text-white border border-white/5 rounded-[20px]"}
+                                <div className="flex flex-col max-w-[75%]">
+                                  {
+                                    selectedGroup && !isMe && (
+                                      <div className="text-xs text-gray-500 mb-2">
+                                        {msg.senderId?.fullName || "Unknown"}
+                                      </div>
+                                    )
+                                  }
+                                  <div
+                                    className={`relative rounded-2xl px-3 py-2 shadow-lg group
+                                        ${isMe
+                                        ? "ml-auto bg-blue-600 text-white shadow-lg shadow-blue-600/20 rounded-[20px]"
+                                        : "bg-[#141C2E] text-white border border-white/5 rounded-[20px]"}
                                     `}
-                                >
-                                  {msg.image && (
-                                    <img
-                                      src={msg.image}
-                                      alt="Shared"
-                                      className="rounded-2xl w-full max-h-72 object-cover"
-                                    />
-                                  )}
-
-                                  {msg.replyTo && (
-                                    <div className={`mb-2 px-3 py-2 rounded-xl border-l-2 border-blue-400 text-xs ${msg.senderId === authUser._id
-                                      ? "bg-blue-700/40 text-blue-100"
-                                      : "bg-[#1A2440] text-gray-400"
-                                      }`}>
-                                      <p className="font-semibold text-blue-300 mb-0.5">
-                                        {msg.replyTo.senderId === authUser._id ? "You" : selectedUser.fullName}
-                                      </p>
-                                      {msg.replyTo.image && !msg.replyTo.text && (
-                                        <p className="italic">📷 Image</p>
-                                      )}
-                                      {msg.replyTo.text && (
-                                        <p className="truncate max-w-[200px]">{msg.replyTo.text}</p>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {msg.text && (
-                                    <p className="leading-5 text-[16px]">{msg.text}</p>
-                                  )}
-
-                                  <p
-                                    className={`flex gap-2 mt-1 text-xs ${msg.senderId === authUser._id
-                                      ? "text-blue-100 justify-end" : "text-gray-400 justify-start"}`
-                                    }
                                   >
-                                    {
-                                      msg.isEdited && "Edited "
-                                    }
-                                    {msgDate.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                    {
-                                      msg.senderId === authUser._id && (
-                                        msg.isRead ? <CheckCheck className='h-4 w-4' /> : <Check className='h-4 w-4' />
-                                      )
-                                    }
-                                  </p>
-
-                                  {/* Hover actions */}
-
-                                  <div className="absolute -bottom-7 right-0 hidden group-hover:flex items-center gap-1  rounded-xl px-1 py-1 z-10">
-                                    {msg.senderId === authUser._id && (
-                                      <>
-                                        <button
-                                          onClick={() => { handleDeleteMessage(msg) }}
-                                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-red-400 transition text-xs"
-                                        >
-                                          <Trash2Icon size={15} />
-
-                                        </button>
-
-                                        <button
-                                          onClick={() => { handleEditMessage(msg) }}
-                                          className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
-                                        >
-                                          <PencilIcon size={15} />
-
-                                        </button>
-                                      </>
+                                    {msg.image && (
+                                      <img
+                                        src={msg.image}
+                                        alt="Shared"
+                                        className="rounded-2xl w-full max-h-72 object-cover"
+                                      />
                                     )}
-                                    <button
-                                      onClick={() => setReplyTo(msg)}
-                                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+
+                                    {msg.replyTo && (
+                                      <div className={`mb-2 px-3 py-2 rounded-xl border-l-2 border-blue-400 text-xs ${isMe
+                                        ? "bg-blue-700/40 text-blue-100"
+                                        : "bg-[#1A2440] text-gray-400"
+                                        }`}>
+                                        <p className="font-semibold text-blue-300 mb-0.5">
+                                          {msg.replyTo.senderId === authUser._id ? "You" : selectedUser?.fullName}
+                                        </p>
+                                        {msg.replyTo.image && !msg.replyTo.text && (
+                                          <p className="italic">📷 Image</p>
+                                        )}
+                                        {msg.replyTo.text && (
+                                          <p className="truncate max-w-[200px]">{msg.replyTo.text}</p>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {msg.text && (
+                                      <p className="leading-5 text-[16px]">{msg.text}</p>
+                                    )}
+
+                                    <p
+                                      className={`flex gap-2 mt-1 text-xs ${isMe
+                                        ? "text-blue-100 justify-end" : "text-gray-400 justify-start"}`
+                                      }
                                     >
-                                      <ReplyIcon size={15} />
+                                      {
+                                        msg.isEdited && "Edited "
+                                      }
+                                      {msgDate.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                      {
+                                        isMe && (
+                                          msg.isRead ? <CheckCheck className='h-4 w-4' /> : <Check className='h-4 w-4' />
+                                        )
+                                      }
+                                    </p>
 
-                                    </button>
+                                    {/* Hover actions */}
+
+                                    <div className="absolute -bottom-7 right-0 hidden group-hover:flex items-center gap-1  rounded-xl px-1 py-1 z-10">
+                                      {isMe && (
+                                        <>
+                                          <button
+                                            onClick={() => { handleDeleteMessage(msg) }}
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-red-400 transition text-xs"
+                                          >
+                                            <Trash2Icon size={15} />
+
+                                          </button>
+
+                                          <button
+                                            onClick={() => { handleEditMessage(msg) }}
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+                                          >
+                                            <PencilIcon size={15} />
+
+                                          </button>
+                                        </>
+                                      )}
+                                      <button
+                                        onClick={() => setReplyTo(msg)}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-white hover:text-blue-500 transition text-xs"
+                                      >
+                                        <ReplyIcon size={15} />
+
+                                      </button>
+                                    </div>
+
                                   </div>
-
                                 </div>
                               </div>
                             </React.Fragment>
@@ -270,7 +284,7 @@ function ChatContainer() {
                       <div ref={messageEndRef} />
                     </div>
                   ) : isMessagesLoading ? <MessagesLoadingSkeleton /> : (
-                    <NoChatHistoryPlaceholder name={selectedUser.fullName} />
+                    <NoChatHistoryPlaceholder name={selectedUser?.fullName} />
                   )
                 }
               </div>
