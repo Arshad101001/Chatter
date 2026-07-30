@@ -93,7 +93,7 @@ export const useAuthStore = create((set, get) => ({
             if (socket) {
                 socket.emit("profile:updated", { updatedUser: res.data });
             }
-            
+
             toast.success("Profile updated successfully");
         } catch (error) {
             console.log("Error in update profile: ", error);
@@ -129,6 +129,32 @@ export const useAuthStore = create((set, get) => ({
                 chatStore.appendIncomingMessage(newMessage);
             }
         });
+
+        socket.on("newGroupMessage", (message) => {
+            const chatStore = useChatStore.getState();
+            const senderId = message.senderId._id || message.senderId;
+
+            const updatedGroups = chatStore.groups.map((g) =>
+                g._id === message.groupId
+                    ? {
+                        ...g,
+                        lastMessage: {
+                            text: message.text,
+                            image: message.image,
+                            sender: senderId,
+                            createdAt: message.createdAt,
+                        },
+                    }
+                    : g
+            );
+
+            chatStore.setGroups(updatedGroups); 
+
+            if (chatStore.selectedGroup?._id === message.groupId) {
+                chatStore.appendGroupMessage(message);
+            }
+        });
+
     },
 
     disconnectSocket: () => {
