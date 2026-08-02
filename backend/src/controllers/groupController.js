@@ -1,6 +1,7 @@
 import { getSocketIdByUserId } from "../lib/socket.js";
 import Group from "../models/groupModel.js";
 import cloudinary from "../lib/cloudinary.js";
+import Message from "../models/messageModel.js";
 
 export const createGroup = async (req, res) => {
     try {
@@ -64,7 +65,22 @@ export const getUserGroups = async (req, res) => {
             .populate("members", "fullName profilePic")
             .sort({ "lastMessage.createdAt": -1 });
 
-        res.status(200).json(groups);
+        const groupsWithUnread = await Promise.all(
+            groups.map(async (group) => {
+                const unreadCount = await Message.countDocuments({
+                    groupId: group._id,
+                    senderId: { $ne: userId },
+                    seenBy: { $ne: userId },
+                });
+
+                return {
+                    ...group.toObject(),
+                    unreadCount,
+                };
+            }) 
+        );
+
+        res.status(200).json(groupsWithUnread);
     } catch (error) {
         console.log("Error in getUserGroups:", error.message);
         res.status(500).json({ message: "Internal server error" });

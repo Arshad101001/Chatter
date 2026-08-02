@@ -26,7 +26,18 @@ export const useChatStore = create((set, get) => ({
 
     setActiveTab: (tab) => set({ activeTab: tab }),
     setSelectedUser: (selectedUser) => set({ selectedUser, selectedGroup: null, messages: [], isTyping: false }),
-    setSelectedGroup: (selectedGroup) => set({ selectedGroup, selectedUser: null, messages: [], isTyping: false }),
+    setSelectedGroup: (selectedGroup) => {
+        set((state) => ({
+            selectedGroup,
+            selectedUser: null,
+            messages: [],
+            isTyping: false,
+            groups: state.groups.map((g) =>
+                g._id === selectedGroup?._id ? { ...g, unreadCount: 0 } : g
+            ),
+        }));
+    },
+
     setRemoteSocketId: (remoteSocketId) => set({ remoteSocketId }),
     setIsCalling: (isCalling) => set({ isCalling }),
     setCallType: (callType) => set({ callType }),
@@ -37,6 +48,13 @@ export const useChatStore = create((set, get) => ({
     clearReplyTo: () => set({ replyTo: null }),
     setGroups: (groups) => set({ groups }),
     appendGroupMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+    markGroupMessagesSeen: async (groupId) => {
+        try {
+            await axiosInstance.put(`/messages/group/${groupId}/seen`);
+        } catch (error) {
+            console.log("Error marking messages as seen:", error.message);
+        }
+    },
 
     updateUserInList: (updatedUser) => set((state) => ({
         chats: state.chats?.map((c) =>
@@ -258,7 +276,6 @@ export const useChatStore = create((set, get) => ({
         socket.off("newMessage");
     },
 
-    // useChatStore.js (or useGroupStore.js)
     subscribeToGroupMessages: () => {
         const { selectedGroup } = get();
         if (!selectedGroup) return;

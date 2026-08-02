@@ -79,7 +79,6 @@ function ChatsList() {
       {combinedList.map((item) => {
         if (item.type === "group") {
           const group = item.data;
-          // console.log(group);
 
           return (
             <button
@@ -99,13 +98,17 @@ function ChatsList() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">{item.lastMessageText}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="mt-0.5 truncate text-xs text-gray-500">{item.lastMessageText}</p>
+                    <span className={group.unreadCount > 0 ? "ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white " : "hidden"}>
+                      {group.unreadCount}
+                    </span>
+                  </div>
                 </div>
               </div>
             </button>
           );
         }
-        console.log(item.data);
 
         const chat = item.data;
         return (

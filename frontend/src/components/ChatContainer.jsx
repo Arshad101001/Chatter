@@ -12,7 +12,7 @@ import { axiosInstance } from '../lib/axios';
 import toast from 'react-hot-toast';
 
 function ChatContainer() {
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo, selectedGroup, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo, selectedGroup, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages, markGroupMessagesSeen } = useChatStore();
   const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
@@ -22,6 +22,7 @@ function ChatContainer() {
   useEffect(() => {
     if (selectedGroup) {
       getGroupMessages(selectedGroup._id);
+      markGroupMessagesSeen(selectedGroup._id);
       subscribeToGroupMessages();
       return () => unsubscribeFromGroupMessages();
     } else if (selectedUser) {
@@ -29,7 +30,7 @@ function ChatContainer() {
       subscribeToMessages();
       return () => unsubscribeFromMessages();
     }
-  }, [selectedUser, selectedGroup, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages]);
+  }, [selectedUser, selectedGroup, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages, markGroupMessagesSeen]);
 
   useEffect(() => {
     if (messageEndRef.current) {

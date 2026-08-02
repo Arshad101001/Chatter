@@ -133,25 +133,28 @@ export const useAuthStore = create((set, get) => ({
         socket.on("newGroupMessage", (message) => {
             const chatStore = useChatStore.getState();
             const senderId = message.senderId._id || message.senderId;
+            const isGroupOpen = chatStore.selectedGroup?._id === message.groupId;
 
-            const updatedGroups = chatStore.groups.map((g) =>
-                g._id === message.groupId
-                    ? {
-                        ...g,
-                        lastMessage: {
-                            text: message.text,
-                            image: message.image,
-                            sender: senderId,
-                            createdAt: message.createdAt,
-                        },
-                    }
-                    : g
-            );
+            const updatedGroups = chatStore.groups.map((g) => {
+                if (g._id !== message.groupId) return g;
 
-            chatStore.setGroups(updatedGroups); 
+                return {
+                    ...g,
+                    lastMessage: {
+                        text: message.text,
+                        image: message.image,
+                        sender: senderId,
+                        createdAt: message.createdAt,
+                    },
+                    unreadCount: isGroupOpen ? 0 : (g.unreadCount || 0) + 1,
+                };
+            });
 
-            if (chatStore.selectedGroup?._id === message.groupId) {
+            chatStore.setGroups(updatedGroups);
+
+            if (isGroupOpen) {
                 chatStore.appendGroupMessage(message);
+                chatStore.markGroupMessagesSeen(message.groupId);
             }
         });
 

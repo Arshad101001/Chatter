@@ -381,3 +381,20 @@ export const getGroupMessages = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+export const markGroupMessagesAsSeen = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const userId = req.user._id;
+
+        await Message.updateMany(
+            { groupId, seenBy: { $ne: userId } },
+            { $addToSet: { seenBy: userId } }
+        );
+
+        res.status(200).json({ message: "Messages marked as seen" });
+    } catch (error) {
+        console.log("Error in markGroupMessagesAsSeen:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
