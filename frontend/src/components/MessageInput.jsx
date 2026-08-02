@@ -16,7 +16,7 @@ function MessageInput({ message, isEdit, resetEdit }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
 
-  const { sendMessage, updateMessage, selectedUser, selectedGroup, sendGroupMessage, replyTo, clearReplyTo, } = useChatStore();
+  const { sendMessage, updateMessage, updateGroupMessage, selectedUser, selectedGroup, sendGroupMessage, replyTo, clearReplyTo, } = useChatStore();
   const { authUser } = useAuthStore();
   const socket = useAuthStore.getState().socket;
 
@@ -31,11 +31,18 @@ function MessageInput({ message, isEdit, resetEdit }) {
     if (!text.trim() && !imagePreview) return;
 
     if (isEdit && message) {
-      updateMessage({
-        ...message,
-        text: text.trim(),
-        image: imagePreview,
-      });
+      if (isGroup) {
+        updateGroupMessage({
+          _id: message._id,
+          text: text.trim(),
+        });
+      } else {
+        updateMessage({
+          ...message,
+          text: text.trim(),
+          image: imagePreview,
+        });
+      }
       resetEdit();
     } else if (isGroup) {
       sendGroupMessage({

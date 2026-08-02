@@ -55,6 +55,9 @@ export const useChatStore = create((set, get) => ({
             console.log("Error marking messages as seen:", error.message);
         }
     },
+    updateMessageInList: (updatedMessage) => set((state) => ({
+        messages: state.messages.map((m) => m._id === updatedMessage._id ? updatedMessage : m),
+    })),
 
     updateUserInList: (updatedUser) => set((state) => ({
         chats: state.chats?.map((c) =>
@@ -193,6 +196,24 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    updateGroupMessage: (messageData) => {
+        const { selectedGroup, messages } = get();
+        const socket = useAuthStore.getState().socket;
+
+        const updatedMessages = messages.map((msg) =>
+            msg._id === messageData._id
+                ? { ...msg, text: messageData.text, image: messageData.image, isEdited: true }
+                : msg
+        );
+        set({ messages: updatedMessages });
+
+        socket.emit("editGroupMessage", {
+            messageId: messageData._id,
+            groupId: selectedGroup._id,
+            newText: messageData.text,
+        });
+    },
+
     sendMessage: async (messageData) => {
         const { selectedUser, messages } = get();
         const { authUser } = useAuthStore.getState()
@@ -282,13 +303,6 @@ export const useChatStore = create((set, get) => ({
 
         const socket = useAuthStore.getState().socket;
 
-        socket.on("groupMessageEdited", (updatedMessage) => {
-            const { messages } = get();
-            set({
-                messages: messages.map(m => m._id === updatedMessage._id ? updatedMessage : m),
-            });
-        });
-
         socket.on("groupMessageDeleted", ({ messageId }) => {
             const { messages } = get();
             set({ messages: messages.filter(m => m._id !== messageId) });
@@ -297,7 +311,6 @@ export const useChatStore = create((set, get) => ({
 
     unsubscribeFromGroupMessages: () => {
         const socket = useAuthStore.getState().socket;
-        socket.off("groupMessageEdited");
         socket.off("groupMessageDeleted");
     },
 

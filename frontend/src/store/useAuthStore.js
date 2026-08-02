@@ -141,6 +141,7 @@ export const useAuthStore = create((set, get) => ({
                 return {
                     ...g,
                     lastMessage: {
+                        messageId: message._id,
                         text: message.text,
                         image: message.image,
                         sender: senderId,
@@ -155,6 +156,26 @@ export const useAuthStore = create((set, get) => ({
             if (isGroupOpen) {
                 chatStore.appendGroupMessage(message);
                 chatStore.markGroupMessagesSeen(message.groupId);
+            }
+        });
+
+        socket.on("groupMessageEdited", (updatedMessage) => {
+            const chatStore = useChatStore.getState();
+
+            // update sidebar lastMessage if this edited message is the last message
+            const updatedGroups = chatStore.groups.map((g) => {
+                if (g.lastMessage?.messageId?.toString() === updatedMessage._id.toString()) {
+                    return { ...g, lastMessage: { ...g.lastMessage, text: updatedMessage.text } };
+                }
+
+                return g;
+            });
+            
+            chatStore.setGroups(updatedGroups);
+
+            // update open messages list if this group is currently open
+            if (chatStore.selectedGroup?._id === updatedMessage.groupId) {
+                chatStore.updateMessageInList(updatedMessage);
             }
         });
 

@@ -157,10 +157,11 @@ io.on("connection", async (socket) => {
 
             await Group.findByIdAndUpdate(groupId, {
                 lastMessage: {
+                    messageId: message._id,
                     text,
                     image,
                     sender: senderId,
-                    createdAt: new Date(),
+                    createdAt: message.createdAt,
                 },
             });
 
@@ -189,14 +190,16 @@ io.on("connection", async (socket) => {
             message.isEdited = true;
             await message.save();
 
+            const populatedMessage = await message.populate("senderId", "fullName profilePic");
+
             // update group's lastMessage only if this was the latest message
             const group = await Group.findById(groupId);
-            if (group.lastMessage?.createdAt?.getTime() === message.createdAt.getTime()) {
+            if (group.lastMessage?.messageId?.toString() === messageId.toString()) {
                 group.lastMessage.text = newText;
                 await group.save();
             }
 
-            io.to(groupId).emit("groupMessageEdited", message);
+            io.to(groupId).emit("groupMessageEdited", populatedMessage);
         } catch (error) {
             console.log("Error in editGroupMessage socket:", error.message);
             socket.emit("error", { message: "Failed to edit message" });
@@ -225,6 +228,7 @@ io.on("connection", async (socket) => {
             await Group.findByIdAndUpdate(groupId, {
                 lastMessage: latestMessage
                     ? {
+                        messageId: latestMessage._id,
                         text: latestMessage.text,
                         image: latestMessage.image,
                         sender: latestMessage.senderId,

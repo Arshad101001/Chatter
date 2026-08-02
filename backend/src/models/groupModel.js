@@ -30,6 +30,7 @@ const groupSchema = mongoose.Schema({
     },
 
     lastMessage: {
+        messageId: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
         text: { type: String },
         image: { type: String },
         sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
