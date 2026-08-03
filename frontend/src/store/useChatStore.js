@@ -214,6 +214,19 @@ export const useChatStore = create((set, get) => ({
         });
     },
 
+    deleteGroupMessage: (messageId) => {
+        const { selectedGroup, messages } = get();
+        const socket = useAuthStore.getState().socket;
+
+        set({ messages: messages.filter((m) => m._id !== messageId) });
+
+        socket.emit("deleteGroupMessage", { messageId, groupId: selectedGroup._id });
+    },
+
+    removeMessageFromList: (messageId) => set((state) => ({
+        messages: state.messages.filter((m) => m._id !== messageId),
+    })),
+
     sendMessage: async (messageData) => {
         const { selectedUser, messages } = get();
         const { authUser } = useAuthStore.getState()
@@ -303,15 +316,11 @@ export const useChatStore = create((set, get) => ({
 
         const socket = useAuthStore.getState().socket;
 
-        socket.on("groupMessageDeleted", ({ messageId }) => {
-            const { messages } = get();
-            set({ messages: messages.filter(m => m._id !== messageId) });
-        });
+        
     },
 
     unsubscribeFromGroupMessages: () => {
         const socket = useAuthStore.getState().socket;
-        socket.off("groupMessageDeleted");
     },
 
     updateChatList: (chatPartner, message) => {

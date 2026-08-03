@@ -222,22 +222,22 @@ io.on("connection", async (socket) => {
 
             await Message.findByIdAndDelete(messageId);
 
-            // re-sync lastMessage since the deleted one might have been the latest
+            // update lastMessage since the deleted one might have been the latest
             const latestMessage = await Message.findOne({ groupId }).sort({ createdAt: -1 });
 
-            await Group.findByIdAndUpdate(groupId, {
-                lastMessage: latestMessage
-                    ? {
-                        messageId: latestMessage._id,
-                        text: latestMessage.text,
-                        image: latestMessage.image,
-                        sender: latestMessage.senderId,
-                        createdAt: latestMessage.createdAt,
-                    }
-                    : null,
-            });
+            const newLastMessage = latestMessage
+                ? {
+                    messageId: latestMessage._id,
+                    text: latestMessage.text,
+                    image: latestMessage.image,
+                    sender: latestMessage.senderId,
+                    createdAt: latestMessage.createdAt,
+                }
+                : null;
 
-            io.to(groupId).emit("groupMessageDeleted", { messageId, groupId });
+            await Group.findByIdAndUpdate(groupId, { lastMessage: newLastMessage });
+
+            io.to(groupId).emit("groupMessageDeleted", { messageId, groupId, newLastMessage });
         } catch (error) {
             console.log("Error in deleteGroupMessage socket:", error.message);
             socket.emit("error", { message: "Failed to delete message" });

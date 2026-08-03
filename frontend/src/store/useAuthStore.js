@@ -170,12 +170,26 @@ export const useAuthStore = create((set, get) => ({
 
                 return g;
             });
-            
+
             chatStore.setGroups(updatedGroups);
 
             // update open messages list if this group is currently open
             if (chatStore.selectedGroup?._id === updatedMessage.groupId) {
                 chatStore.updateMessageInList(updatedMessage);
+            }
+        });
+
+        socket.on("groupMessageDeleted", ({ messageId, groupId, newLastMessage }) => {
+            const chatStore = useChatStore.getState();
+
+            const updatedGroups = chatStore.groups.map((g) =>
+                g._id === groupId ? { ...g, lastMessage: newLastMessage } : g
+            );
+            chatStore.setGroups(updatedGroups);
+            
+            // remove from open messages if this group is currently open
+            if (chatStore.selectedGroup?._id === groupId) {
+                chatStore.removeMessageFromList(messageId);
             }
         });
 

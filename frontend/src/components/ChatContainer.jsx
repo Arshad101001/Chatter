@@ -12,7 +12,7 @@ import { axiosInstance } from '../lib/axios';
 import toast from 'react-hot-toast';
 
 function ChatContainer() {
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo, selectedGroup, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages, markGroupMessagesSeen } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages, isCalling, incomingCall, setIncomingCall, isTyping, setReplyTo, selectedGroup, getGroupMessages, subscribeToGroupMessages, unsubscribeFromGroupMessages, markGroupMessagesSeen, deleteGroupMessage } = useChatStore();
   const socket = useAuthStore.getState().socket;
   const { authUser } = useAuthStore()
 
@@ -50,44 +50,49 @@ function ChatContainer() {
   }, [messages])
 
   const handleDeleteMessage = async (message) => {
-    const updatedMessages = messages.filter(msg => msg._id !== message._id);
-    useChatStore.setState({ messages: updatedMessages });
+    if (selectedGroup) {
+      deleteGroupMessage(message._id);
+    } else {
 
-    const isLastMessage = messages.at(-1)?._id === message._id;
+      const updatedMessages = messages.filter(msg => msg._id !== message._id);
+      useChatStore.setState({ messages: updatedMessages });
 
-    try {
-      const res = await axiosInstance.delete(`/messages/delete-message/${message._id}`);
+      const isLastMessage = messages.at(-1)?._id === message._id;
 
-      if (res.status === 200) {
-        toast.success("Message deleted successfully!");
+      try {
+        const res = await axiosInstance.delete(`/messages/delete-message/${message._id}`);
 
-        if (isLastMessage) {
-          const newLastMsg = res.data.newLastMessage;
-          const receiverId = message.senderId === authUser._id
-            ? message.receiverId
-            : message.senderId;
+        if (res.status === 200) {
+          toast.success("Message deleted successfully!");
 
-          const updatedLastMessages = useChatStore.getState().lastMessages.map((msg) => {
-            if (msg.receiverId === receiverId || msg.senderId === receiverId) {
-              if (!newLastMsg) return { ...msg, text: "", image: null };
-              return {
-                ...msg,
-                text: newLastMsg.text,
-                senderId: newLastMsg.senderId,
-                receiverId: newLastMsg.receiverId,
-                isRead: newLastMsg.isRead,
-                image: newLastMsg.image,
-                updatedAt: newLastMsg.updatedAt,
-              };
-            }
-            return msg;
-          });
+          if (isLastMessage) {
+            const newLastMsg = res.data.newLastMessage;
+            const receiverId = message.senderId === authUser._id
+              ? message.receiverId
+              : message.senderId;
 
-          useChatStore.setState({ lastMessages: updatedLastMessages });
+            const updatedLastMessages = useChatStore.getState().lastMessages.map((msg) => {
+              if (msg.receiverId === receiverId || msg.senderId === receiverId) {
+                if (!newLastMsg) return { ...msg, text: "", image: null };
+                return {
+                  ...msg,
+                  text: newLastMsg.text,
+                  senderId: newLastMsg.senderId,
+                  receiverId: newLastMsg.receiverId,
+                  isRead: newLastMsg.isRead,
+                  image: newLastMsg.image,
+                  updatedAt: newLastMsg.updatedAt,
+                };
+              }
+              return msg;
+            });
+
+            useChatStore.setState({ lastMessages: updatedLastMessages });
+          }
         }
+      } catch (error) {
+        toast.error("Error while deleting the message");
       }
-    } catch (error) {
-      toast.error("Error while deleting the message");
     }
   }
 
